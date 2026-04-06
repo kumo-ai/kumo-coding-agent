@@ -1,0 +1,150 @@
+name: Sync DS-agent context
+
+on:
+  # Manual trigger: pick a repo and version
+  workflow_dispatch:
+    inputs:
+      repo:
+        description: "Source repo to sync from"
+        required: true
+        type: choice
+        options:
+          - kumo-sdk
+          - kumo-pql
+          - kumo-api
+      target_version:
+        description: "Target package version (e.g., 2.12.0)"
+        required: true
+        type: string
+
+  # Automated trigger: upstream CI sends a dispatch event on release
+  # Payload: { "repo": "kumo-sdk", "version": "2.12.0" }
+  repository_dispatch:
+    types: [kumo-sdk-release, kumo-pql-release, kumo-api-release]
+
+permissions:
+  contents: write
+  pull-requests: write
+
+jobs:
+  sync:
+    runs-on: ubuntu-latest
+    timeout-minutes: 30
+
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+
+      - name: Resolve inputs
+        id: resolve
+        run: |
+          if [ "${{ github.event_name }}" = "repository_dispatch" ]; then
+            echo "repo=${{ github.event.client_payload.repo }}" >> "$GITHUB_OUTPUT"
+            echo "version=${{ github.event.client_payload.version }}" >> "$GITHUB_OUTPUT"
+          else
+            echo "repo=${{ inputs.repo }}" >> "$GITHUB_OUTPUT"
+            echo "version=${{ inputs.target_version }}" >> "$GITHUB_OUTPUT"
+          fi
+
+      - name: Set up Python
+        uses: actions/setup-python@v5
+        with:
+          python-version: "3.11"
+
+      - name: Read current version from _sources.yaml
+        id: current
+        run: |
+          pip install pyyaml
+          CURRENT=$(python3 -c "
+          import yaml, sys
+          with open('context/_sources.yaml') as f:
+              data = yaml.safe_load(f)
+          versions = data.get('_repo_versions', {})
+          repo = '${{ steps.resolve.outputs.repo }}'
+          print(versions.get(repo, 'unknown'))
+          ")
+          echo "version=$CURRENT" >> "$GITHUB_OUTPUT"
+          echo "Current ${{ steps.resolve.outputs.repo }} version: $CURRENT"
+
+      - name: Version gate
+        id: gate
+        run: |
+          CURRENT="${{ steps.current.outputs.version }}"
+          TARGET="${{ steps.resolve.outputs.version }}"
+          if [ "$CURRENT" = "$TARGET" ]; then
+            echo "Already at version $TARGET. Skipping sync."
+            echo "skip=true" >> "$GITHUB_OUTPUT"
+          else
+            echo "Syncing ${{ steps.resolve.outputs.repo }}: $CURRENT → $TARGET"
+            echo "skip=false" >> "$GITHUB_OUTPUT"
+          fi
+
+      - name: Create sync branch
+        if: steps.gate.outputs.skip != 'true'
+        run: |
+          REPO="${{ steps.resolve.outputs.repo }}"
+          VERSION="${{ steps.resolve.outputs.version }}"
+          BRANCH="sync/${REPO}-v${VERSION}"
+          git checkout -b "$BRANCH"
+          echo "BRANCH=$BRANCH" >> "$GITHUB_ENV"
+
+      - name: Install Claude Code
+        if: steps.gate.outputs.skip != 'true'
+        run: npm install -g @anthropic-ai/claude-code
+
+      - name: Run sync sub-skill
+        if: steps.gate.outputs.skip != 'true'
+        env:
+          ANTHROPIC_API_KEY: ${{ secrets.ANTHROPIC_API_KEY }}
+        run: |
+          REPO="${{ steps.resolve.outputs.repo }}"
+          VERSION="${{ steps.resolve.outputs.version }}"
+          SKILL="meta/skills/sync/sync-${REPO}.md"
+
+          claude -p "Run the sync skill at ${SKILL} with target_version=${VERSION}. \
+            Follow every step in order. After updating docs, commit the changes \
+            with message: 'sync DS-agent from ${REPO} v${VERSION}'"
+
+      - name: Check for changes
+        if: steps.gate.outputs.skip != 'true'
+        id: changes
+        run: |
+          if git diff --quiet HEAD; then
+            echo "No changes produced by sync. Skipping PR."
+            echo "has_changes=false" >> "$GITHUB_OUTPUT"
+          else
+            echo "has_changes=true" >> "$GITHUB_OUTPUT"
+          fi
+
+      - name: Push and create PR
+        if: steps.gate.outputs.skip != 'true' && steps.changes.outputs.has_changes == 'true'
+        env:
+          GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+        run: |
+          REPO="${{ steps.resolve.outputs.repo }}"
+          VERSION="${{ steps.resolve.outputs.version }}"
+          CURRENT="${{ steps.current.outputs.version }}"
+
+          git push -u origin "$BRANCH"
+
+          gh pr create \
+            --title "sync: DS-agent from ${REPO} v${VERSION}" \
+            --body "$(cat <<EOF
+          ## Summary
+
+          Automated sync of DS-agent context docs from \`${REPO}\` v${CURRENT} → v${VERSION}.
+
+          - **Triggered by**: \`${{ github.event_name }}\`
+          - **Sub-skill**: \`meta/skills/sync/sync-${REPO}.md\`
+
+          ## Review checklist
+
+          - [ ] Context doc changes are accurate
+          - [ ] \`_sources.yaml\` versions updated correctly
+          - [ ] No broken cross-repo references (especially if kumo-api types changed)
+          - [ ] Eval questions still have correct expected answers
+          - [ ] Skills code examples match updated APIs
+
+          🤖 Generated with [Claude Code](https://claude.com/claude-code)
+          EOF
+          )"

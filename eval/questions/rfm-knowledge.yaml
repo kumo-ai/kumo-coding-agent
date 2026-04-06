@@ -1,0 +1,196 @@
+questions:
+  # --- Graph Construction ---
+  - id: rfm-001
+    category: graph
+    difficulty: basic
+    question: "What are the different ways to create an RFM graph?"
+    expected_answer: |
+      Four methods:
+      1. rfm.Graph.from_data({dict of DataFrames}) — local pandas data
+      2. rfm.Graph.from_snowflake(connection, database, schema) — Snowflake tables
+      3. rfm.Graph.from_snowflake_semantic_view(semantic_view_name, connection) — Snowflake Semantic View
+      4. Manual: rfm.Graph(tables=[SnowTable(...)], edges=[]) then infer_metadata() + infer_links()
+    grading: factual
+
+  - id: rfm-002
+    category: graph
+    difficulty: intermediate
+    question: "After creating an RFM graph, what validation steps should you always perform?"
+    expected_answer: |
+      1. graph.print_metadata() — check table schemas
+      2. graph.print_links() — check FK relationships
+      3. For each table: table.print_metadata() — verify columns and time columns
+      4. graph.validate() — run formal validation
+      Verify: entity table exists, PK is real ID, time columns correct, links semantically correct (not just name-matched).
+    grading: procedural
+
+  - id: rfm-003
+    category: graph
+    difficulty: intermediate
+    question: "infer_links() matched ORDERS.ACCOUNT_ID to ACCOUNTS.ACCOUNT_ID, but ORDERS also has BILLING_ACCOUNT_ID. How do you fix a wrong link?"
+    expected_answer: |
+      Use graph.link() to manually add/fix relationships:
+      graph.link(src_table="ORDERS", fkey="BILLING_ACCOUNT_ID", dst_table="ACCOUNTS")
+      Then verify with graph.print_links() and graph.validate().
+      If ambiguous, ask the user which FK is correct for the prediction task.
+    grading: semantic
+
+  # --- Prediction ---
+  - id: rfm-004
+    category: prediction
+    difficulty: basic
+    question: "How do you run a zero-shot prediction with KumoRFM?"
+    expected_answer: |
+      model = rfm.KumoRFM(graph)
+      pred_df = model.predict(query, run_mode="fast")
+      Where query is a PQL string like "PREDICT COUNT(orders.*, 0, 30, DAYS) > 0 FOR EACH users.user_id"
+    grading: exact_structure
+
+  - id: rfm-005
+    category: prediction
+    difficulty: basic
+    question: "What run_mode options are available for KumoRFM predictions?"
+    expected_answer: "Four modes: \"debug\" (fastest, testing only), \"fast\" (~4x faster than normal, default for experimentation), \"normal\" (balanced), and \"best\" (~4x slower than normal, highest quality for production). RFM accepts these as strings, e.g., run_mode=\"fast\"."
+    grading: factual
+
+  - id: rfm-006
+    category: prediction
+    difficulty: intermediate
+    question: "How do you evaluate an RFM model's quality on a query?"
+    expected_answer: |
+      metrics_df = model.evaluate(query, run_mode="fast")
+      This returns evaluation metrics (e.g., AUROC for classification, RMSE for regression) computed on held-out data.
+    grading: exact_structure
+
+  # --- TaskTable ---
+  - id: rfm-007
+    category: task_table
+    difficulty: intermediate
+    question: "When should you use TaskTable instead of query-driven prediction in RFM?"
+    expected_answer: "Use TaskTable only when you already have explicit context/prediction rows prepared, or when the task is easier to express as a dataframe than as a PQL query. Default to query-driven model.predict() for most use cases."
+    grading: semantic
+
+  # --- Explainability ---
+  - id: rfm-008
+    category: explainability
+    difficulty: intermediate
+    question: "How do you get feature importance explanations from KumoRFM?"
+    expected_answer: |
+      result = model.predict(query, explain=rfm.ExplainConfig(), run_mode="fast")
+      Explainability works best as a single-entity FAST-mode feature.
+    grading: exact_structure
+
+  # --- Semantic Views ---
+  - id: rfm-009
+    category: semantic_view
+    difficulty: intermediate
+    question: "What are the caveats of building an RFM graph from a Snowflake Semantic View?"
+    expected_answer: "Composite primary keys are not fully supported, and some cross-table expressions may be dropped during conversion. Always validate the graph after building from a semantic view."
+    grading: factual
+
+  # --- Task Mapping ---
+  - id: rfm-010
+    category: task_mapping
+    difficulty: intermediate
+    question: "A user asks 'What is the expected total claim amount for each policy in the next 90 days?' What PQL task type is this?"
+    expected_answer: "Temporal regression. The query would be: PREDICT SUM(claims.amount, 0, 90, DAYS) FOR EACH policies.policy_id"
+    grading: semantic
+
+  - id: rfm-011
+    category: task_mapping
+    difficulty: intermediate
+    question: "A user asks 'Will customer C42 place any orders in the next week?' What PQL task type and query?"
+    expected_answer: "Temporal binary classification. Query: PREDICT COUNT(orders.*, 0, 7, DAYS) > 0 FOR users.user_id = 42"
+    grading: semantic
+
+  # --- Error Handling ---
+  - id: rfm-012
+    category: errors
+    difficulty: intermediate
+    question: "An RFM prediction fails because infer_links() didn't detect the relationship between TRANSACTIONS and ACCOUNTS. What should you do?"
+    expected_answer: |
+      1. Inspect columns: look at TRANSACTIONS columns for FK candidates (e.g., ACCOUNT_ID, ACCT_ID)
+      2. Manually add the link: graph.link(src_table="TRANSACTIONS", fkey="ACCOUNT_ID", dst_table="ACCOUNTS")
+      3. Verify: graph.print_links() and graph.validate()
+      Never silently invent a relationship — verify column names and types match.
+    grading: procedural
+
+  # --- Time Semantics ---
+  - id: rfm-013
+    category: time
+    difficulty: intermediate
+    question: "What does anchor_time=None mean in RFM predictions?"
+    expected_answer: "anchor_time=None (the default) means the prediction anchor time is derived from the latest relevant timestamp in the data. anchor_time='entity' is only valid for static predictive queries where the entity table has a time column."
+    grading: factual
+
+  # --- Refuse/Reframe ---
+  - id: rfm-014
+    category: refuse
+    difficulty: advanced
+    question: "A user asks 'Segment our customers into 5 groups based on their behavior.' Can RFM do this?"
+    expected_answer: "No. Clustering/segmentation without a specific prediction target is not supported by PQL or RFM. RFM requires an explicit target (column or aggregation). Alternative: define a specific prediction (e.g., churn probability, spend amount) and then segment customers by their predicted scores using SQL."
+    grading: semantic
+
+  - id: rfm-015
+    category: refuse
+    difficulty: advanced
+    question: "A user asks 'Detect anomalous transactions.' Can RFM do this?"
+    expected_answer: "No. Anomaly detection without an explicit target is not supported. Alternative: if there's a fraud_flag or is_anomaly column, predict that directly. Or predict transaction amount and flag outliers (predictions far from actual) using SQL post-processing."
+    grading: semantic
+
+  # --- RFM API Parameters ---
+  - id: rfm-016
+    category: api_params
+    difficulty: intermediate
+    question: "What is the correct parameter name to pass entity IDs to model.predict() in KumoRFM?"
+    expected_answer: "The parameter is `indices`, not `entities`. It accepts List[str], List[float], or List[int]. Example: model.predict(query, indices=[42, 123], run_mode='fast')"
+    grading: factual
+
+  - id: rfm-017
+    category: api_params
+    difficulty: intermediate
+    question: "How do you run batch predictions in KumoRFM for a large number of entities?"
+    expected_answer: "Use the batch_mode() context manager: with model.batch_mode(batch_size='max', num_retries=1): pred_df = model.predict(query, indices=large_list). batch_size='max' uses the maximum applicable batch size."
+    grading: factual
+
+  - id: rfm-018
+    category: api_params
+    difficulty: intermediate
+    question: "What does the use_prediction_time parameter do in KumoRFM predict()?"
+    expected_answer: "use_prediction_time=True uses the anchor timestamp as an additional feature during prediction. This is beneficial for time-series forecasting tasks where the prediction time matters."
+    grading: semantic
+
+  - id: rfm-019
+    category: api_params
+    difficulty: intermediate
+    question: "How do you control the neighborhood sampling in KumoRFM?"
+    expected_answer: "Use the num_neighbors parameter (list of ints) to control per-hop sampling, e.g., num_neighbors=[8, 8] samples 8 neighbors per hop for 2 hops. The deprecated num_hops parameter is ignored when num_neighbors is set."
+    grading: factual
+
+  - id: rfm-020
+    category: api_params
+    difficulty: intermediate
+    question: "What is model.get_train_table() used for in KumoRFM?"
+    expected_answer: "get_train_table(query, size=N) returns a DataFrame of entity labels the model would see for a given query and anchor time. Used for debugging to inspect training data quality. Parameters: query (str), size (int), anchor_time, random_seed, max_iterations."
+    grading: semantic
+
+  - id: rfm-021
+    category: api_params
+    difficulty: advanced
+    question: "What constraints exist on KumoRFM explainability?"
+    expected_answer: "Explainability (explain=True) is only supported for single entity predictions with run_mode='fast'. If multiple entities are provided, it raises ValueError. If run_mode is normal or best, it auto-downgrades to fast with a warning."
+    grading: factual
+
+  - id: rfm-022
+    category: api_params
+    difficulty: intermediate
+    question: "How do you specify custom evaluation metrics in KumoRFM?"
+    expected_answer: "Pass a metrics list to model.evaluate(): metrics_df = model.evaluate(query, run_mode='fast', metrics=['auroc', 'f1']). If not specified, default metrics for the task type are used."
+    grading: factual
+
+  - id: rfm-023
+    category: api_params
+    difficulty: intermediate
+    question: "What does context_anchor_time do in KumoRFM predict()?"
+    expected_answer: "context_anchor_time sets the maximum anchor timestamp for in-context learning examples. If None, the anchor_time determines context examples' anchor time. Useful when you want to control what historical data the model uses as context separately from the prediction anchor."
+    grading: semantic

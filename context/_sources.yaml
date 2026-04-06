@@ -1,0 +1,118 @@
+# Provenance manifest: tracks where each context doc was sourced from.
+# Used by meta/skills/sync-from-source.md, validate-freshness.md, and
+# per-repo sync sub-skills in meta/skills/sync/.
+#
+# Fields per entry:
+#   source_repo:  git repository containing the authoritative source
+#   version:      package version the doc was last synced from
+#   source_files: repo-relative paths to the source files read during sync
+#   last_sync:    date the context doc was last updated from the source
+
+# ─── Repo-level version summary ──────────────────────────────────────
+# At-a-glance current state. Updated during sync.
+_repo_versions:
+  kumo-sdk: "2.16.3"    # kumoai PyPI package
+  kumo-pql: "6caec97"   # kumopql package (commit hash)
+  kumo-api: "0.74.0"    # kumoapi PyPI package
+  kumo-ml: "9f412e6"    # kumoml package (commit hash, internal repo)
+
+# ─── kumo-sdk owned docs ─────────────────────────────────────────────
+
+platform/rfm-overview.md:
+  source_repo: kumo-sdk
+  version: "2.16.3"
+  source_files:
+    - kumoai/experimental/rfm/rfm.py
+    - kumoai/experimental/rfm/graph.py
+  last_sync: "2026-03-31"
+
+platform/sdk-overview.md:
+  source_repo: kumo-sdk
+  version: "2.16.3"
+  source_files:
+    - kumoai/trainer/trainer.py
+    - kumoai/trainer/job.py
+    - kumoai/graph/graph.py
+    - kumoai/pquery/training_table.py
+    - kumoai/pquery/prediction_table.py
+  last_sync: "2026-03-31"
+
+platform/graph-construction.md:
+  source_repo: kumo-sdk
+  version: "2.16.3"
+  source_files:
+    - kumoai/graph/graph.py
+    - kumoai/experimental/rfm/graph.py
+  last_sync: "2026-03-31"
+
+platform/data-connectors.md:
+  source_repo: kumo-sdk
+  version: "2.16.3"
+  source_files:
+    - kumoai/connector/snowflake.py
+    - kumoai/connector/databricks.py
+    - kumoai/connector/s3.py
+  last_sync: "2026-03-31"
+
+# ─── kumo-pql owned docs ─────────────────────────────────────────────
+
+platform/pql-syntax.md:
+  source_repo: kumo-pql
+  version: "6caec97"
+  source_files:
+    - kumopql/grammar/PQLGrammar.g4
+    - docs/PQL_SYNTAX_REFERENCE.md
+  last_sync: "2026-03-31"
+
+platform/pql-errors.md:
+  source_repo: kumo-pql
+  version: "6caec97"
+  source_files:
+    - kumopql/validator/time_range_validator.py
+    - docs/PQL_FAILURE_CATEGORIES.md
+    - docs/PQL_SYNTAX_ERRORS.md
+  last_sync: "2026-03-31"
+
+# ─── kumo-ml (tracked, no sourced docs yet) ──────────────────────────
+# kumo-ml houses the RFM ML models and inference code. No context docs
+# are currently sourced from this repo. When docs are added, follow the
+# pattern of other repo sections above.
+
+# ─── Other sources ───────────────────────────────────────────────────
+
+patterns/prediction-patterns.md:
+  source_repo: kumo-ai-engineering
+  version: n/a
+  source_files:
+    - system-prompt.md
+  last_sync: "2026-03-31"
+
+# ─── Authored docs (no upstream source) ──────────────────────────────
+
+guides/rfm-vs-training.md:
+  source_repo: n/a
+  version: n/a
+  source_files: []
+  last_sync: "2026-03-31"
+
+guides/interpret-results.md:
+  source_repo: n/a
+  version: n/a
+  source_files: []
+  last_sync: "2026-03-31"
+
+# ─── Vertical guides (authored, domain-specific) ───────────────────
+
+verticals/fraud-detection.md:
+  source_repo: n/a
+  version: n/a
+  source_files: []
+  last_sync: "2026-03-31"
+  notes: "placeholder — scaffold only, not yet validated"
+
+verticals/demand-forecasting.md:
+  source_repo: n/a
+  version: n/a
+  source_files: []
+  last_sync: "2026-03-31"
+  notes: "placeholder — scaffold only, not yet validated"

@@ -1,0 +1,7 @@
+# Scratch memory (session-persistent, machine-local)
+scratch/*
+!scratch/.gitkeep
+!scratch/README.md
+
+# Eval results
+eval/results/

@@ -1,0 +1,253 @@
+# Gap manifest: tracks known documentation gaps and platform limitations.
+# Checked during sync-from-source and verify-content workflows.
+#
+# Types:
+#   documentation — SDK feature exists but agent doesn't document it
+#   platform      — feature doesn't exist in SDK; agent should refuse/workaround
+#
+# Fields:
+#   id:          unique identifier (doc-NNN or plat-NNN)
+#   feature:     short name of the feature
+#   description: what it does / why it matters
+#   check:       grep pattern to verify existence (documentation gaps only)
+#   check_path:  file to grep in (relative to kumoai package root)
+#   affects:     agent files that need updating when resolved
+#   priority:    critical | high | medium | low
+#   workaround:  suggested alternative (platform gaps only)
+#   added:       date the gap was recorded
+#   status:      open | resolved
+#   resolved:    date resolved (when status = resolved)
+
+# ─── Documentation Gaps ───────────────────────────────────────────────
+# SDK features that exist but the agent doesn't cover (or covers incorrectly)
+
+documentation_gaps:
+
+  - id: doc-001
+    feature: "training_job.progress()"
+    description: >
+      Returns AutoTrainerProgress with per-trial, per-epoch train/validation
+      metrics. This is the training curves data — essential for diagnosing
+      overfitting vs underfitting.
+    check: "def progress"
+    check_path: "kumoai/trainer/job.py"
+    affects:
+      - context/platform/sdk-overview.md
+      - skills/train-model.md
+      - skills/iterate-model.md
+    priority: critical
+    added: "2026-03-30"
+    status: resolved
+    resolved: "2026-03-31"
+
+  - id: doc-002
+    feature: "result.model_plan"
+    description: >
+      Returns the actual ModelPlan used after AutoML selection.
+      Critical for iteration — without it, users can't see which
+      hyperparameters won the search.
+    check: "model_plan"
+    check_path: "kumoai/trainer/job.py"
+    affects:
+      - context/platform/sdk-overview.md
+      - skills/train-model.md
+      - skills/iterate-model.md
+    priority: critical
+    added: "2026-03-30"
+    status: resolved
+    resolved: "2026-03-31"
+
+  - id: doc-003
+    feature: "graph.get_table_stats()"
+    description: >
+      Returns per-column statistics (min, max, mean, median, null_count,
+      value_distribution). wait_for param controls blocking: None (immediate),
+      "minimal" (basic stats), "full" (all stats including distributions).
+    check: "def get_table_stats"
+    check_path: "kumoai/graph/graph.py"
+    affects:
+      - context/platform/sdk-overview.md
+      - skills/train-model.md
+      - skills/iterate-model.md
+    priority: critical
+    added: "2026-03-30"
+    status: resolved
+    resolved: "2026-03-31"
+
+  - id: doc-004
+    feature: "graph.visualize()"
+    description: >
+      Generates a graphviz diagram of tables, PKs, FKs, and edges.
+      Useful for validating graph structure visually.
+    check: "def visualize"
+    check_path: "kumoai/graph/graph.py"
+    affects:
+      - context/platform/sdk-overview.md
+      - skills/build-graph.md
+    priority: medium
+    added: "2026-03-30"
+    status: resolved
+    resolved: "2026-03-31"
+
+  - id: doc-005
+    feature: "training_table.data_df() / .export() / .update()"
+    description: >
+      Access raw training data as DataFrame, export for modification
+      (e.g., add weight column), and re-import modified data.
+    check: "def data_df"
+    check_path: "kumoai/pquery/training_table.py"
+    affects:
+      - context/platform/sdk-overview.md
+      - skills/train-model.md
+    priority: high
+    added: "2026-03-30"
+    status: open
+
+  - id: doc-006
+    feature: "batch_prediction_result inspection methods"
+    description: >
+      summary() returns num_entities_predicted.
+      predictions_urls() returns Parquet URLs without loading into memory.
+      embeddings_df() / embeddings_urls() for entity embeddings.
+      export() to re-export to different connector.
+    check: "def summary"
+    check_path: "kumoai/trainer/job.py"
+    affects:
+      - context/platform/sdk-overview.md
+      - skills/train-model.md
+    priority: high
+    added: "2026-03-30"
+    status: open
+
+  - id: doc-007
+    feature: "batch_prediction_job.progress()"
+    description: >
+      Returns PredictionProgress with total_iterations,
+      completed_iterations, elapsed/estimated time.
+    check: "class PredictionProgress"
+    check_path: "kumoapi/jobs.py"
+    affects:
+      - context/platform/sdk-overview.md
+      - skills/train-model.md
+    priority: high
+    added: "2026-03-30"
+    status: open
+
+  - id: doc-008
+    feature: "training_job.cancel() / batch_prediction_job.cancel()"
+    description: >
+      Cancel in-progress training or prediction jobs.
+    check: "def cancel"
+    check_path: "kumoai/trainer/job.py"
+    affects:
+      - context/platform/sdk-overview.md
+      - skills/train-model.md
+    priority: medium
+    added: "2026-03-30"
+    status: open
+
+  - id: doc-009
+    feature: "JobStatusReport.event_log"
+    description: >
+      Stage-by-stage event log with timestamps (Ingestion, Training,
+      Predicting stages). Useful for debugging failed jobs.
+    check: "event_log"
+    check_path: "kumoapi/jobs.py"
+    affects:
+      - context/platform/sdk-overview.md
+      - skills/train-model.md
+      - skills/debug-prediction.md
+    priority: medium
+    added: "2026-03-30"
+    status: open
+
+  - id: doc-010
+    feature: "endpoint.ping() and detailed update() params"
+    description: >
+      Health check for online serving endpoints. update() accepts
+      refresh_graph_data, graph_override, and new_model_id for
+      hot-swapping without downtime.
+    check: "def ping"
+    check_path: "kumoai/trainer/online_serving.py"
+    affects:
+      - context/platform/sdk-overview.md
+    priority: low
+    added: "2026-03-30"
+    status: resolved
+    resolved: "2026-03-31"
+
+  - id: doc-011
+    feature: "BaselineJobResult.metrics()"
+    description: >
+      Compare trained model against baseline models. Returns
+      per-configuration evaluation metrics.
+    check: "class BaselineJobResult"
+    check_path: "kumoai/trainer/job.py"
+    affects:
+      - context/platform/sdk-overview.md
+      - skills/iterate-model.md
+    priority: medium
+    added: "2026-03-30"
+    status: open
+
+  - id: doc-012
+    feature: "prediction_table.anchor_time()"
+    description: >
+      Check what anchor time was used for prediction table generation.
+    check: "def anchor_time"
+    check_path: "kumoai/pquery/prediction_table.py"
+    affects:
+      - context/platform/sdk-overview.md
+      - skills/train-model.md
+    priority: low
+    added: "2026-03-30"
+    status: open
+
+# ─── Platform Gaps ────────────────────────────────────────────────────
+# Features that do NOT exist in the SDK — agent should refuse or workaround
+
+platform_gaps:
+
+  - id: plat-001
+    feature: "Enterprise SDK explainability"
+    description: >
+      No feature importance or explanation API on trained model results.
+      RFM has explain=True; Enterprise SDK does not.
+    workaround: >
+      Use RFM explain on the same query for feature importance.
+      Or analyze holdout_df manually (compare predictions vs actuals,
+      slice by feature values to find drivers).
+    affects:
+      - skills/iterate-model.md
+      - skills/train-model.md
+    priority: high
+    added: "2026-03-30"
+    status: open
+
+  - id: plat-002
+    feature: "Per-example explanations (Enterprise)"
+    description: >
+      Cannot get per-entity feature attributions from a trained model.
+      Only aggregate metrics are available.
+    workaround: >
+      For individual entity explanations, run RFM predict with
+      explain=True on specific entities of interest.
+    affects:
+      - skills/iterate-model.md
+    priority: medium
+    added: "2026-03-30"
+    status: open
+
+  - id: plat-003
+    feature: "External tracking integration (MLflow, W&B)"
+    description: >
+      No built-in integration with external experiment tracking systems.
+      Users must manually log metrics and parameters.
+    workaround: >
+      Use result.metrics() and result.model_plan to extract values,
+      then log to external tracker manually in user code.
+    affects:
+      - skills/iterate-model.md
+    priority: low
+    added: "2026-03-30"
+    status: open

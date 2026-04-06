@@ -1,0 +1,194 @@
+questions:
+  # --- Syntax Basics ---
+  - id: pql-001
+    category: syntax
+    difficulty: basic
+    question: "Write a PQL query to predict total order revenue per customer for the next 30 days."
+    expected_answer: "PREDICT SUM(orders.amount, 0, 30, days) FOR EACH customers.customer_id"
+    grading: exact_structure
+
+  - id: pql-002
+    category: syntax
+    difficulty: basic
+    question: "Write a PQL query to predict whether each user will make at least one purchase in the next 7 days."
+    expected_answer: "PREDICT COUNT(orders.*, 0, 7, days) > 0 FOR EACH users.user_id"
+    grading: exact_structure
+
+  - id: pql-003
+    category: syntax
+    difficulty: basic
+    question: "Write a PQL query to predict each customer's membership tier (a categorical column)."
+    expected_answer: "PREDICT customers.membership_tier FOR EACH customers.customer_id"
+    grading: exact_structure
+
+  # --- Aggregations ---
+  - id: pql-004
+    category: aggregations
+    difficulty: basic
+    question: "What PQL aggregation functions are supported?"
+    expected_answer: "SUM, AVG, MIN, MAX, COUNT. SUM/AVG/MIN/MAX require numerical columns. COUNT works on any column or table.*."
+    grading: factual
+
+  - id: pql-005
+    category: aggregations
+    difficulty: intermediate
+    question: "Write a PQL query to predict the count of completed orders per user in the next 90 days."
+    expected_answer: "PREDICT COUNT(orders.* WHERE orders.status = 'completed', 0, 90, days) FOR EACH users.user_id"
+    grading: exact_structure
+
+  # --- Time Windows ---
+  - id: pql-006
+    category: time_windows
+    difficulty: basic
+    question: "Are negative time windows (e.g., -30 to 0 days) supported in PQL?"
+    expected_answer: "No. In RFM_SDK_V2 mode, start time must be >= 0. Use (0, N, days) for future predictions. For historical analysis, use SQL instead."
+    grading: factual
+
+  - id: pql-007
+    category: time_windows
+    difficulty: intermediate
+    question: "How do you write PQL queries to forecast weekly sales for 4 weeks?"
+    expected_answer: |
+      Use consecutive non-overlapping time windows:
+      PREDICT SUM(orders.amount, 0, 7, days) FOR EACH customers.customer_id  -- Week 1
+      PREDICT SUM(orders.amount, 7, 14, days) FOR EACH customers.customer_id  -- Week 2
+      PREDICT SUM(orders.amount, 14, 21, days) FOR EACH customers.customer_id  -- Week 3
+      PREDICT SUM(orders.amount, 21, 28, days) FOR EACH customers.customer_id  -- Week 4
+      Then combine results with SQL.
+    grading: procedural
+
+  # --- ASSUMING Clause ---
+  - id: pql-008
+    category: assuming
+    difficulty: intermediate
+    question: "Why does this PQL query fail: PREDICT SUM(orders.amount, 0, 30, days) FOR EACH users.user_id ASSUMING users.status = 'premium'?"
+    expected_answer: "ASSUMING requires temporal aggregation, not static column conditions. The fix is to wrap it in a temporal aggregation, e.g., ASSUMING COUNT(upgrades.*, 0, 30, days) > 0."
+    grading: semantic
+
+  # --- Unsupported Operations ---
+  - id: pql-009
+    category: unsupported
+    difficulty: basic
+    question: "Can PQL predict the number of unique products a customer will buy?"
+    expected_answer: "No. COUNT_DISTINCT is not supported in PQL. Use COUNT for total purchases (including repeats), or use SQL for historical distinct counts."
+    grading: semantic
+
+  - id: pql-010
+    category: unsupported
+    difficulty: intermediate
+    question: "A user asks 'Recommend the top 5 products for customer C123.' Can this be done with PQL in RFM_SDK_V2 mode?"
+    expected_answer: "No. Link prediction and LIST_DISTINCT are not supported in RFM_SDK_V2. Alternatives: predict purchase probability per category, predict total spend, or predict whether the customer will buy from specific categories."
+    grading: semantic
+
+  # --- Filters ---
+  - id: pql-011
+    category: filters
+    difficulty: intermediate
+    question: "What is the difference between a WHERE filter inside an aggregation and a top-level WHERE after FOR EACH?"
+    expected_answer: "Inside aggregation (PREDICT COUNT(orders.* WHERE orders.status = 'completed', ...)) = filters WHAT counts toward the target. Top-level WHERE (FOR EACH users.user_id WHERE users.age > 18) = filters WHO gets scored."
+    grading: semantic
+
+  - id: pql-012
+    category: filters
+    difficulty: advanced
+    question: "Can you filter on a numeric fact column inside an aggregation, like COUNT(orders.* WHERE orders.amount > 100, ...)?"
+    expected_answer: "No. WHERE inside aggregation can only filter on dimension (categorical) columns, not fact (numeric) columns. Use the numeric column as the aggregation target instead, e.g., SUM(orders.amount, ...) >= threshold."
+    grading: factual
+
+  # --- Error Diagnosis ---
+  - id: pql-013
+    category: errors
+    difficulty: intermediate
+    question: "A PQL query returns 'Missing foreign key' error. What does this mean and how do you fix it?"
+    expected_answer: "There is no direct FK relationship between the entity table and the target table. Check graph edges/links. If the path requires multi-hop (e.g., A→B→C), use Pattern 3 (Two-Step Aggregation): predict at the directly connected entity, then aggregate with SQL."
+    grading: semantic
+
+  - id: pql-014
+    category: errors
+    difficulty: intermediate
+    question: "A PQL query returns 'Semantic Type Mismatch' error when using AVG on a column. What's wrong?"
+    expected_answer: "AVG/SUM/MIN/MAX can only operate on numerical columns. The column likely has stype=categorical. Use COUNT instead for categorical columns, or choose a different numerical column."
+    grading: semantic
+
+  # --- Complex Patterns ---
+  - id: pql-015
+    category: patterns
+    difficulty: advanced
+    question: "Design a PQL+SQL workflow to find the top 10 accounts with the highest revenue at risk from churn."
+    expected_answer: |
+      Pattern 9 (Opportunity Scoring):
+      Step 1 [SQL]: Get accounts with their current revenue/LTV
+      Step 2 [PQL]: PREDICT COUNT(churn_events.*, 0, 90, days) > 0 FOR EACH accounts.account_id (churn probability)
+      Step 3 [SQL]: Calculate revenue_at_risk = revenue * churn_probability, ORDER BY revenue_at_risk DESC LIMIT 10
+    grading: procedural
+
+  - id: pql-016
+    category: patterns
+    difficulty: advanced
+    question: "How would you compare the impact of offering a discount on deal close rates? Describe the workflow."
+    expected_answer: |
+      Pattern 4 (Counterfactual Comparison):
+      Step 1 [PQL]: Baseline win probability (no ASSUMING)
+      Step 2 [PQL]: Win probability with discount (ASSUMING clause with temporal aggregation)
+      Step 3 [SQL]: Calculate lift = with_discount - baseline for each deal
+      IMPORTANT: Use the same ANCHOR_TIME for both predictions.
+    grading: procedural
+
+  # --- Entity Specification ---
+  - id: pql-017
+    category: entity
+    difficulty: basic
+    question: "In PQL for Snowflake Intelligence, how do you specify which entities to predict for?"
+    expected_answer: "Always use FOR EACH syntax in PQL. Specific entities are provided via the entity_sql parameter (a SQL query returning entity IDs), not inline in the PQL query."
+    grading: semantic
+
+  - id: pql-018
+    category: entity
+    difficulty: intermediate
+    question: "What column can be used after FOR EACH in a PQL query?"
+    expected_answer: "Only a primary key column of a table in the graph. Using a foreign key, regular column, or non-existent column will produce an error."
+    grading: factual
+
+  # --- Data Types ---
+  - id: pql-019
+    category: types
+    difficulty: basic
+    question: "Which column semantic types (stypes) can be predicted with PQL?"
+    expected_answer: "Numerical and categorical columns can be predicted. Primary keys, foreign keys, timestamps, text, and sequences cannot be predicted."
+    grading: factual
+
+  - id: pql-020
+    category: types
+    difficulty: intermediate
+    question: "A user asks 'When will this customer churn?' Can PQL answer this?"
+    expected_answer: "No. PQL cannot predict timestamps (when something will happen). Alternative: predict the probability of churn within specific time windows, e.g., COUNT(churn_events.*, 0, 30, days) = 0 and COUNT(churn_events.*, 0, 60, days) = 0 to bracket the timing."
+    grading: semantic
+
+  # --- SDK Parameters ---
+  - id: pql-021
+    category: sdk_params
+    difficulty: intermediate
+    question: "What is the correct way to set the learning rate in a Kumo ModelPlan?"
+    expected_answer: "model_plan.optimization.base_lr = [0.001, 0.005]. The parameter is 'base_lr' (not 'learning_rate'), it lives on the OptimizationPlan sub-plan, and it takes a list of candidate values for AutoML search."
+    grading: factual
+
+  - id: pql-022
+    category: sdk_params
+    difficulty: intermediate
+    question: "What are the 5 sub-plans that compose a Kumo ModelPlan?"
+    expected_answer: "1. TrainingJobPlan (num_experiments, tune_metric, pruning), 2. ColumnProcessingPlan (encoder_overrides, na_strategy), 3. NeighborSamplingPlan (num_neighbors, adaptive_sampling), 4. OptimizationPlan (max_epochs, base_lr, batch_size, loss, early_stopping), 5. ModelArchitecturePlan (channels, activation, normalization)"
+    grading: factual
+
+  - id: pql-023
+    category: sdk_params
+    difficulty: intermediate
+    question: "What parameters does TrainingTableGenerationPlan expose for controlling training data?"
+    expected_answer: "split, train_start_offset, train_end_offset, start_time, end_time, timeframe_step, forecast_length, lag_timesteps, year_over_year, weight_col. Most default to 'inferred'. start_time and end_time accept both date strings and integer offsets."
+    grading: factual
+
+  - id: pql-024
+    category: sdk_params
+    difficulty: advanced
+    question: "How do you configure FocalLoss for handling class imbalance in Kumo model training?"
+    expected_answer: "from kumoapi.model_plan import FocalLossConfig; model_plan.optimization.loss = [FocalLossConfig(name='focal', alpha=0.25, gamma=2.0)]. alpha balances positive vs negative examples (0-1), gamma controls focus on hard examples (>=1)."
+    grading: factual
