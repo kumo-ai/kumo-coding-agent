@@ -1,6 +1,6 @@
 # Sync Context from Source Repos
 
-Orchestrate syncing kumo-agent context docs from upstream source repositories.
+Orchestrate syncing DS-agent context docs from upstream source repositories.
 Delegates to per-repo sub-skills for the actual work.
 
 ---
@@ -56,7 +56,7 @@ When a GitHub Action triggers a sync (via `workflow_dispatch` or
 2. The matching sub-skill is run automatically
 3. A PR is created with the changes for human review
 
-See `.github/workflows/sync-kumo-agent.yml` for the workflow definition.
+See `.github/workflows/sync-context.yml` for the workflow definition.
 
 ---
 
