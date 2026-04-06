@@ -1,6 +1,6 @@
 # Sync from kumo-pql
 
-Update kumo-agent PQL documentation when a new version of the `kumopql`
+Update DS-agent PQL documentation when a new version of the `kumopql`
 package is released. Covers PQL syntax, grammar rules, and error messages.
 
 **Grammar is authoritative.** If a doc says one thing and `PQLGrammar.g4`
@@ -171,7 +171,7 @@ If syntax was removed, update expected answers.
 
 ```bash
 git add context/ skills/ eval/ meta/
-git commit -m "sync kumo-agent from kumo-pql v<target_version>
+git commit -m "sync DS-agent from kumo-pql v<target_version>
 
 Updated: pql-syntax.md, pql-errors.md
 Changes: <summary — e.g., 'added MEDIAN aggregation, new time unit weeks'>"

@@ -178,7 +178,7 @@ source code — do not trust this table if it may be stale.
 - [ ] Source code read (not other docs) for each verification
 - [ ] Discrepancies recorded with exact before/after
 - [ ] Fixes applied to the document under review
-- [ ] Same wrong claim searched across **all** kumo-agent files
+- [ ] Same wrong claim searched across **all** DS-agent files
 - [ ] Eval expected answers updated if affected
 - [ ] Gap manifest checked — resolved gaps documented, new gaps added
 - [ ] Source header updated with verification date
