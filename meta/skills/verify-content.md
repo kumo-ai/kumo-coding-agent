@@ -139,7 +139,7 @@ source code — do not trust this table if it may be stale.
 `SUM`, `AVG`, `MIN`, `MAX`, `COUNT`, `COUNT_DISTINCT`, `FIRST`, `LAST`, `LIST_DISTINCT`
 
 **RFM Supported Aggregations** (subset — rest are Enterprise only):
-`SUM`, `AVG`, `MIN`, `MAX`, `COUNT`
+`SUM`, `AVG`, `MIN`, `MAX`, `COUNT`, `LIST_DISTINCT`
 
 **PQL Comparison Operators** (from `PQLGrammar.g4`):
 `=`, `!=`, `<`, `>`, `<=`, `>=`, `IS`, `IS NOT`, `IN`, `IS IN`, `LIKE`, `NOT LIKE`, `CONTAINS`, `NOT CONTAINS`, `STARTS WITH`, `ENDS WITH`

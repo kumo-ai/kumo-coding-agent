@@ -203,6 +203,7 @@ write the query string.
 | "What category is X?" | Static classification | `PREDICT entity.category_col FOR EACH entity.pk` |
 | "What is the value of X?" | Static regression | `PREDICT entity.numeric_col FOR EACH entity.pk` |
 | "Forecast X for the next N periods" | Forecasting | Use consecutive non-overlapping windows: `(0,7,days)`, `(7,14,days)`, etc. |
+| "Which items will user interact with?" | Link prediction | `PREDICT LIST_DISTINCT(events.item_id, 0, N, days) FOR EACH users.user_id` (target column must be a FK) |
 | "What if we change Z?" | What-if | Add `ASSUMING ...` clause to any temporal query |
 
 **Pre-flight checks before running:**
