@@ -207,10 +207,10 @@ graph.validate()
 
 ### Step 4: Write PQL Query
 
-**Before writing the query, inspect the dataset directly** — load the data,
-examine table names, column names, dtypes, and primary keys. Use this to
-both build the graph (Step 2) and write the query here. Never use
-placeholder names; always use the real schema.
+**Do not write the PQL query until you have run Steps 2–3 and seen the
+actual schema.** Run `graph.print_metadata()` and `graph.print_links()`,
+read the output, then use the real table names, column names, and primary
+keys in the query. Never guess or use placeholders.
 
 Map the natural-language question to the correct PQL task family, then
 write the query string.
