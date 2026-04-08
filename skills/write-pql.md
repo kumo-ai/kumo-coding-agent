@@ -158,7 +158,9 @@ import kumoai.experimental.rfm as rfm
 model = rfm.KumoRFM(graph)
 # predict() will validate the query before execution.
 # Invalid queries raise QueryValidationError with details.
-pred_df = model.predict(query, run_mode="fast")
+# indices is REQUIRED for FOR EACH queries.
+entity_ids = graph["entity_table"].df["pk_column"].tolist()
+pred_df = model.predict(query, indices=entity_ids, run_mode="fast")
 ```
 
 **Using the PQuery object directly:**
