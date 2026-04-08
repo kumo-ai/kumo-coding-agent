@@ -145,9 +145,15 @@ gh pr create \
 - [ ] Content verified against source (if applicable)
 
 ---
-*Created via `/ds-agent-pr`*
+*Created via `/ds-agent-pr` by @AUTHOR*
 EOF
 )"
+```
+
+Before creating the PR, capture the author's GitHub identity and replace
+`@AUTHOR` in the body:
+```bash
+gh_user=$(gh api user --jq '.login')
 ```
 
 If `gh` is not authenticated, tell the user to run `gh auth login -h github.com` first.
@@ -162,4 +168,4 @@ rm -rf "$WORK_DIR"
 Print:
 1. The PR URL
 2. Summary of changes made
-3. Remind the user the PR needs review before merge
+3. Tell the user: "Your PR has been submitted. A Kumo team member will review it and follow up with you."

@@ -269,6 +269,9 @@ pred_table = pquery.generate_prediction_table(pred_plan, non_blocking=False)
 **Step 7b: Run batch prediction**
 
 ```python
+# Use the same connector from graph construction (see skills/build-graph.md Step 2)
+# e.g. connector = kumoai.SnowflakeConnector(name=..., account=..., warehouse=..., database=..., schema_name=...)
+
 prediction_job = trainer.predict(
     graph=graph,
     prediction_table=pred_table,

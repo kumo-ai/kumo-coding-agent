@@ -104,10 +104,17 @@ Examples:
 <Any additional context: SDK version, customer use case, etc.>
 
 ---
-*Filed via `/ds-agent-issue`*
+*Filed via `/ds-agent-issue` by @REPORTER*
 ```
 
 ### Step 6: Create the Issue
+
+First, capture the reporter's GitHub identity:
+```bash
+gh_user=$(gh api user --jq '.login')
+```
+
+Replace `@REPORTER` in the body template with `@$gh_user`.
 
 Run:
 ```bash
@@ -128,7 +135,8 @@ and provide the exact command to retry.
 
 After the issue is created:
 1. Print the issue URL
-2. If the type is **gap**, suggest also adding an entry to
+2. Tell the user: "Your issue has been filed. A Kumo team member will review it and follow up with you."
+3. If the type is **gap**, suggest also adding an entry to
    `context/_gaps.yaml` with status: open
-3. If the type is **bug** and the fix is obvious, suggest running
+4. If the type is **bug** and the fix is obvious, suggest running
    `/ds-agent-pr` to fix it directly

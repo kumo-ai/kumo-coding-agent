@@ -19,13 +19,21 @@ Run instant predictions on relational data using KumoRFM — no model training r
 Import the RFM module and authenticate against the KumoRFM service.
 
 ```python
+import kumoai
 import kumoai.experimental.rfm as rfm
+
+# Check SDK version (requires kumoai >= 2.16.3)
+print(f"kumoai version: {kumoai.__version__}")
+# If outdated: uv add kumoai --upgrade  (or: pip install --upgrade kumoai)
 
 # Option A: Explicit API key
 rfm.init(api_key="your-api-key", url="https://kumorfm.ai/api")
 
 # Option B: Environment variable (KUMO_RFM_API_KEY)
 rfm.init(url="https://kumorfm.ai/api")
+
+# Option C: Colab — browser-based login (opens auth widget)
+# rfm.authenticate()
 ```
 
 Verify connectivity before proceeding:
@@ -37,7 +45,18 @@ Verify connectivity before proceeding:
 
 ### Step 2: Build Graph
 
-Choose one of 4 paths based on where your data lives.
+Choose one of 5 paths based on where your data lives.
+
+> **Memory guidance:** `from_snowflake()` and `from_sqlite()` create **lazy
+> table wrappers** — they do NOT load data into Python memory. Use these for
+> large datasets. `from_data()` requires pandas DataFrames in memory — only
+> use it for small data or prototyping. Rule of thumb: if the dataset is
+> larger than ~50% of available RAM, use a Snowflake or SQLite backend.
+>
+> ```python
+> import psutil
+> print(f"Available RAM: {psutil.virtual_memory().available / 1e9:.1f} GB")
+> ```
 
 **Option A: Local DataFrames**
 
@@ -102,6 +121,26 @@ graph.infer_metadata()
 graph.infer_links()
 ```
 
+**Option E: Sample dataset from RelBench**
+
+Use a pre-built benchmark dataset for quick experimentation when the user
+doesn't have their own data yet or wants to try the platform first.
+
+```python
+# Requires: pip install pooch
+graph = rfm.Graph.from_relbench("f1")
+graph.print_metadata()
+graph.print_links()
+```
+
+Valid dataset names: `"f1"`, `"hm"`, `"avito"`, `"stack"`, `"amazon"`,
+`"trial"`, `"salt"` (prefix `rel-` is optional, e.g., `"rel-f1"` also works).
+Datasets are cached locally after first download (`~/.cache/relbench/`).
+If the name is invalid, the error message suggests valid options.
+
+- **RelBench** (Stanford benchmark for relational deep learning): https://relbench.stanford.edu/start/
+- **SALT** (SAP enterprise supply chain dataset): https://huggingface.co/datasets/SAP/SALT
+
 ### Step 3: Validate Graph
 
 Always inspect the graph before running predictions. A malformed graph is
@@ -157,11 +196,13 @@ write the query string.
 
 | Question Pattern | Task Family | PQL Template |
 |---|---|---|
-| "Will X happen in next N days?" | Temporal binary | `PREDICT COUNT(target.col, 0, N, days) > 0 FOR EACH entity.pk` |
+| "Will X happen in next N days?" | Temporal binary classification | `PREDICT COUNT(target.col, 0, N, days) > 0 FOR EACH entity.pk` |
 | "How many X in next N days?" | Temporal regression | `PREDICT COUNT(target.col, 0, N, days) FOR EACH entity.pk` |
 | "What total X in next N days?" | Temporal regression | `PREDICT SUM(target.col, 0, N, days) FOR EACH entity.pk` |
 | "What is the average X?" | Temporal regression | `PREDICT AVG(target.col, 0, N, days) FOR EACH entity.pk` |
 | "What category is X?" | Static classification | `PREDICT entity.category_col FOR EACH entity.pk` |
+| "What is the value of X?" | Static regression | `PREDICT entity.numeric_col FOR EACH entity.pk` |
+| "Forecast X for the next N periods" | Forecasting | Use consecutive non-overlapping windows: `(0,7,days)`, `(7,14,days)`, etc. |
 | "What if we change Z?" | What-if | Add `ASSUMING ...` clause to any temporal query |
 
 **Pre-flight checks before running:**
@@ -184,12 +225,22 @@ query = (
 
 ### Step 5: Run Prediction
 
-Execute the query against the graph using KumoRFM.
+**Ask the user before running:**
+
+| User goal | `run_mode` | In-context examples | Typical latency |
+|-----------|-----------|-------------------|-----------------|
+| Quick exploration, iteration | `"fast"` | ~1,000 | Seconds |
+| Balanced accuracy | `"normal"` | ~5,000 | Minutes |
+| Maximum accuracy / final evaluation | `"best"` | ~10,000 | Several minutes |
+
+Default to `"fast"` for first-time predictions. Also ask: "Do you need
+predictions for a small set of entities or a large batch?" — if large,
+use `batch_mode()`.
 
 ```python
 model = rfm.KumoRFM(graph)
 
-# Basic prediction
+# Basic prediction (indices=None predicts for all entities in the graph)
 pred_df = model.predict(query, run_mode="fast")
 print(pred_df.head(10))
 print(f"Rows returned: {len(pred_df)}")
@@ -198,7 +249,7 @@ print(f"Rows returned: {len(pred_df)}")
 The returned DataFrame contains columns: `ENTITY`, `ANCHOR_TIMESTAMP`,
 `TARGET_PRED`, and class probabilities (e.g. `True_PROB`, `False_PROB`).
 
-**Predict for specific entities:**
+**Predict for specific entities (recommended — pass `indices` explicitly):**
 
 ```python
 pred_df = model.predict(query, indices=[101, 202, 303], run_mode="fast")
@@ -210,10 +261,16 @@ pred_df = model.predict(query, indices=[101, 202, 303], run_mode="fast")
 pred_df = model.predict(query, anchor_time=pd.Timestamp("2025-01-01"), run_mode="normal")
 ```
 
-**Per-entity timestamps (batch mode):**
+**Batch mode (for large entity sets):**
+
+Use `batch_mode()` when predicting for hundreds+ entities — it splits the
+request into batches, retries failures, and concatenates results automatically.
 
 ```python
-# Each entity uses its own time column value as anchor
+with model.batch_mode(batch_size="max", num_retries=1):
+    pred_df = model.predict(query, indices=all_ids, run_mode="fast")
+
+# Per-entity timestamps: each entity uses its own time column value as anchor
 with model.batch_mode(batch_size="max", num_retries=1):
     pred_df = model.predict(query, indices=all_ids, anchor_time="entity", run_mode="best")
 ```
@@ -229,6 +286,12 @@ pred_df = model.predict(query, num_neighbors=[8, 8], run_mode="fast")
 
 ```python
 pred_df = model.predict(query, use_prediction_time=True, run_mode="fast")
+```
+
+**Autoregressive lag features:**
+
+```python
+pred_df = model.predict(query, lag_timesteps=7, run_mode="fast")
 ```
 
 **Increase label search for strict filters:**
@@ -325,14 +388,15 @@ with open("scratch/graph_ecom.pkl", "wb") as f:
 | `rfm.Graph.from_data()` | Build graph from DataFrames | `dict[str, DataFrame]` |
 | `rfm.Graph.from_snowflake()` | Build graph from Snowflake schema | `connection`, `database`, `schema` |
 | `rfm.Graph.from_snowflake_semantic_view()` | Build graph from Semantic View | `semantic_view_name`, `connection` |
+| `rfm.Graph.from_relbench()` | Build graph from RelBench dataset | `dataset` name (str) |
 | `graph.print_metadata()` | Display table/column metadata | — |
 | `graph.print_links()` | Display foreign-key relationships | — |
 | `graph.link()` | Add a foreign-key link | `src_table`, `fk_col`, `dst_table` |
 | `graph.unlink()` | Remove a foreign-key link | `src_table`, `fk_col`, `dst_table` |
 | `graph.validate()` | Check graph for errors | — |
 | `rfm.KumoRFM(graph)` | Create model from graph | `graph`, `verbose` |
-| `model.predict()` | Run zero-shot prediction | `query`, `indices`, `run_mode`, `anchor_time`, `explain`, `num_neighbors`, `max_pq_iterations`, `use_prediction_time` |
-| `model.evaluate()` | Evaluate prediction quality | `query`, `run_mode`, `metrics`, `anchor_time`, `num_neighbors` |
+| `model.predict()` | Run zero-shot prediction | `query`, `indices`, `run_mode`, `anchor_time`, `explain`, `num_neighbors`, `max_pq_iterations`, `use_prediction_time`, `lag_timesteps`, `inference_config` |
+| `model.evaluate()` | Evaluate prediction quality | `query`, `run_mode`, `metrics`, `anchor_time`, `num_neighbors`, `lag_timesteps`, `inference_config` |
 | `model.batch_mode()` | Context manager for large batches | `batch_size="max"`, `num_retries=1` |
 | `model.get_train_table()` | Debug training labels | `query`, `size`, `anchor_time`, `max_iterations` |
 | `model.is_valid_entity()` | Check entity validity | `query`, `indices`, `anchor_time` |
