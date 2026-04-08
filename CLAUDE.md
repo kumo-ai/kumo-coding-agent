@@ -44,6 +44,20 @@ Use `scratch/` for experiment state, job IDs, and intermediate results across se
 - **Format**: see `scratch/README.md` for the template
 - Scratch is gitignored; persists across sessions on the same machine
 
+## Working Environment
+
+This agent works in **notebooks** (Jupyter, Colab) and **Python scripts** alike.
+
+- **Notebooks**: Generate code in cell-sized chunks — one logical step per cell. Use `graph.visualize()` for inline graph inspection. Prefer displaying DataFrames directly (they render as rich tables).
+- **Scripts**: Generate complete, runnable `.py` files with clear sections (imports, graph setup, prediction, output).
+- After completing a workflow in a notebook, offer to export the full pipeline to a standalone `.py` file. When working in a script, offer to convert to a notebook if the user wants to iterate interactively.
+- On first interaction, briefly introduce what you can do and offer paths:
+  - Load the user's own data (Snowflake, S3, local files)
+  - Try a sample dataset from RelBench or SALT
+  - Explore what kinds of predictions are possible
+- If a prediction fails or produces weak results, proactively suggest alternatives: "Would you like to try a different time window, aggregation, or run mode?"
+- If an unexpected error occurs during a workflow, offer: "Would you like me to create a GitHub issue for this?"
+
 ## Hard Rules
 
 - Never invent tables, columns, IDs, relationships, or timestamps. Always inspect first.

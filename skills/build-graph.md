@@ -95,6 +95,19 @@ Review the output for each table:
 - Which column is identified as the time column
 - Inferred foreign key links between tables
 
+**Multiple datetime columns:** When a table has more than one datetime column,
+`infer_metadata()` picks one heuristically (prefers columns named `create*`,
+then the column with the oldest timestamps). This may not be correct.
+
+**Ask the user:** "Table X has datetime columns [col_a, col_b, col_c]. Which
+one represents when each row was created or when the event occurred?"
+
+To override the inferred time column:
+```python
+graph["orders"].time_column = "order_date"  # RFM
+# SDK: specify time_column in Table.from_source_table()
+```
+
 **SDK path:**
 
 ```python
@@ -201,6 +214,25 @@ graph.validate()
 graph.print_metadata()
 graph.print_links()
 ```
+
+**Visualize the graph (recommended in notebooks):**
+
+```python
+# Auto-detects Jupyter/Colab and renders ER diagram inline
+graph.visualize()
+
+# Mermaid backend (no system dependencies, needs mermaid-py):
+graph.visualize(backend="mermaid")
+
+# Save to file:
+graph.visualize(path="graph.png")
+
+# Less clutter for large schemas — show only PKs, FKs, and time columns:
+graph.visualize(show_columns=False)
+```
+
+`visualize()` supports backends `'auto'`, `'graphviz'`, and `'mermaid'`.
+Requires either `graphviz` (system package + Python binding) or `mermaid-py`.
 
 **SDK path:**
 

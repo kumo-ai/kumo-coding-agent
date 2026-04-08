@@ -19,6 +19,39 @@ Typical workflow:
 
 ---
 
+## How RFM Works
+
+KumoRFM is a **Relational Foundation Model** — a large pre-trained graph
+transformer that makes predictions on relational data without task-specific
+training.
+
+**Key concepts:**
+
+- **Graph transformer**: RFM treats your relational database as a graph (tables
+  are node types, foreign keys are edges). It uses a transformer architecture
+  that operates on this graph structure, attending to neighboring rows across
+  tables to build contextual representations.
+
+- **In-context learning**: Instead of training on your data, RFM constructs
+  in-context examples from historical data (similar to few-shot prompting in
+  LLMs). The `run_mode` parameter controls how many examples are used:
+  `fast` (~1K), `normal` (~5K), `best` (~10K).
+
+- **Graph sampling**: For each entity being predicted, RFM samples a local
+  neighborhood from the graph (controlled by `num_neighbors`). This subgraph
+  provides the relational context the model uses for prediction.
+
+- **Zero-shot generalization**: Because RFM is pre-trained on diverse relational
+  schemas, it can make predictions on new datasets and new tasks without any
+  fine-tuning. The PQL query tells it WHAT to predict; the graph provides the data.
+
+**Supported use cases**: Churn prediction, demand forecasting, fraud detection,
+customer lifetime value, lead scoring, recommendation, and any task expressible
+as a PQL query on relational data. See `context/patterns/prediction-patterns.md`
+for the full catalog.
+
+---
+
 ## Graph Construction
 
 There are four paths to build an RFM graph. Every path produces the same
@@ -155,15 +188,24 @@ FOR EACH users.user_id              -- all entities
 
 ### Static vs Temporal Targets
 
-Static -- predict a column value directly:
+**Static queries** predict a column value directly — no time window, no
+aggregation. The target table does NOT need a time column.
+Use for: "What category is X?", "What is the value of X?"
+
 ```sql
 PREDICT INSURANCE_POLICIES.LOSS_RATIO FOR INSURANCE_POLICIES.POLICY_ID = 'POL-1'
 ```
 
-Temporal -- predict an aggregation over a future window:
+**Temporal queries** predict an aggregation over a future time window using
+`SUM/COUNT/AVG/MIN/MAX(..., start, end, unit)`. The target table MUST have a
+time column. Use for: "Will X happen in next N days?", "How much X in N days?"
+
 ```sql
 PREDICT SUM(CLAIMS.PAID_AMOUNT, 0, 90, DAYS) FOR INSURANCE_POLICIES.POLICY_ID = 'POL-1'
 ```
+
+**Key difference**: temporal queries look forward in time and require a time
+column; static queries predict the current state of an attribute.
 
 ### Target Mapping
 

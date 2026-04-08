@@ -132,7 +132,7 @@ connector = kumoai.SnowflakeConnector.get_by_name("my_sf_connector")
 **What you need:**
 - S3 path to the data (e.g., `s3://my-bucket/ecommerce/`)
 - AWS credentials configured (via env vars, IAM role, or `~/.aws/credentials`)
-- Data must be in Parquet format (one folder per table)
+- Data in Parquet or CSV format (one folder per table)
 
 ```python
 # Enterprise SDK
@@ -145,6 +145,17 @@ customers_df = pd.read_parquet("s3://my-bucket/ecommerce/customers/")
 orders_df = pd.read_parquet("s3://my-bucket/ecommerce/orders/")
 graph = rfm.Graph.from_data({"customers": customers_df, "orders": orders_df})
 ```
+
+**Supported file formats (S3 and file connectors):**
+
+| Format | Supported | Notes |
+|--------|-----------|-------|
+| Parquet | Yes | Standard compression (Snappy, etc.) handled transparently by PyArrow |
+| CSV | Yes | Uncompressed only — `.csv.gz` is **not** supported |
+
+**CSV delimiter support:** Auto-detected from `|`, `,`, `;`, `\t` (tab). The
+SDK samples the file header and uses `csv.Sniffer` for detection. If detection
+fails, defaults to `,`.
 
 ### Local Files (CSV, Parquet)
 
