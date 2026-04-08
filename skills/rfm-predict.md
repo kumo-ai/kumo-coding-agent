@@ -43,6 +43,27 @@ Verify connectivity before proceeding:
 # If the key is invalid you will see an AuthenticationError immediately.
 ```
 
+### Step 1b: Prepare Data
+
+Before building the graph, clean the data so the model sees only what it
+should. These apply to any dataset — not just benchmarks.
+
+- **Concatenate train/test splits**: RFM needs the full relational database.
+  Merge all splits into one table per entity. Save test entity IDs and
+  ground-truth labels separately for held-out evaluation later:
+  ```python
+  test_entity_ids = test_df["pk_column"].tolist()
+  test_labels = test_df[["pk_column", "target_column"]].copy()
+  full_df = pd.concat([train_df, test_df], ignore_index=True)
+  ```
+- **Drop auto-generated columns**: Remove `__index_level_0__`, surrogate
+  row IDs, or any column not part of the real schema.
+- **Drop other target columns**: If the dataset defines multiple prediction
+  targets, remove all except the one you're predicting. Otherwise they
+  leak information to the model.
+- **Mask test labels**: Set the target column to `None` for all test rows.
+  This prevents the model from seeing future answers during prediction.
+
 ### Step 2: Build Graph
 
 Choose one of 5 paths based on where your data lives.
@@ -137,25 +158,29 @@ graph.infer_metadata()
 graph.infer_links()
 ```
 
-**Option E: Sample dataset from RelBench**
+**Option E: Sample dataset (RelBench / SALT)**
 
-Use a pre-built benchmark dataset for quick experimentation when the user
-doesn't have their own data yet or wants to try the platform first.
+For experimentation with a known dataset, download the data and load it
+as DataFrames so you can inspect the schema before building the graph.
+Do not use `from_relbench()` as a shortcut — it skips the data inspection
+step.
 
 ```python
-# Requires: pip install pooch
-graph = rfm.Graph.from_relbench("f1")
-graph.print_metadata()
-graph.print_links()
+# Example: load SALT from HuggingFace
+from datasets import load_dataset
+ds = load_dataset("SAP/SALT")
+
+# Convert to pandas DataFrames — inspect each table
+for table_name in ds:
+    df = ds[table_name].to_pandas()
+    print(f"\n{table_name}: {len(df)} rows, columns: {list(df.columns)}")
+    print(df.dtypes)
 ```
 
-Valid dataset names: `"f1"`, `"hm"`, `"avito"`, `"stack"`, `"amazon"`,
-`"trial"`, `"salt"` (prefix `rel-` is optional, e.g., `"rel-f1"` also works).
-Datasets are cached locally after first download (`~/.cache/relbench/`).
-If the name is invalid, the error message suggests valid options.
+Then build the graph with `from_data()` (Option A) using the DataFrames.
 
-- **RelBench** (Stanford benchmark for relational deep learning): https://relbench.stanford.edu/start/
-- **SALT** (SAP enterprise supply chain dataset): https://huggingface.co/datasets/SAP/SALT
+- **RelBench** (Stanford benchmark): https://relbench.stanford.edu/start/
+- **SALT** (SAP enterprise supply chain): https://huggingface.co/datasets/SAP/SALT
 
 ### Step 3: Validate Graph
 
@@ -207,10 +232,11 @@ graph.validate()
 
 ### Step 4: Write PQL Query
 
-**Do not write the PQL query until you have run Steps 2–3 and seen the
-actual schema.** Run `graph.print_metadata()` and `graph.print_links()`,
-read the output, then use the real table names, column names, and primary
-keys in the query. Never guess or use placeholders.
+**Do not write the PQL query until you have inspected the actual data.**
+Examine the DataFrames or source tables directly (`df.columns`, `df.dtypes`,
+`df.head()`) to learn the real table names, column names, and primary keys.
+Never rely solely on `print_metadata()` — always verify against the data
+itself. Never guess or use placeholders.
 
 Map the natural-language question to the correct PQL task family, then
 write the query string.
@@ -262,16 +288,22 @@ use `batch_mode()`.
 ```python
 model = rfm.KumoRFM(graph)
 
-# Basic prediction (indices=None predicts for all entities in the graph)
-pred_df = model.predict(query, run_mode="fast")
+# FOR EACH queries require indices — pass entity IDs explicitly
+pred_df = model.predict(query, indices=entity_ids, run_mode="fast")
 print(pred_df.head(10))
 print(f"Rows returned: {len(pred_df)}")
 ```
 
+**`indices` is required for `FOR EACH` queries.** The SDK cannot enumerate
+all entities automatically — you must pass the list of entity IDs. Get them
+from the source data (e.g., `df["user_id"].tolist()` for pandas, or
+`SELECT DISTINCT pk FROM table` for Snowflake/SQLite). For single-entity
+queries (`FOR table.pk = 42`), `indices` is optional.
+
 The returned DataFrame contains columns: `ENTITY`, `ANCHOR_TIMESTAMP`,
 `TARGET_PRED`, and class probabilities (e.g. `True_PROB`, `False_PROB`).
 
-**Predict for specific entities (recommended — pass `indices` explicitly):**
+**Predict for a subset of entities:**
 
 ```python
 pred_df = model.predict(query, indices=[101, 202, 303], run_mode="fast")
@@ -333,30 +365,51 @@ print(labels_df.head(10))
 print(f"Label distribution:\n{labels_df['TARGET'].value_counts()}")
 ```
 
-### Step 6: Evaluate (Optional)
+### Step 6: Evaluate
 
-Run evaluation to get quality metrics. This performs an automatic
-train/test split on historical data.
+**Quick check** — `model.evaluate()` creates its own internal train/test
+split. Good for fast iteration during exploration, but not suitable for
+benchmarking or comparing to published results.
 
 ```python
 metrics_df = model.evaluate(query, run_mode="fast")
 print(metrics_df)
-
-# Request specific metrics
-metrics_df = model.evaluate(query, run_mode="fast", metrics=["auroc", "f1"])
 ```
 
-Returned metrics depend on task type:
+**Held-out evaluation** — when the dataset has an official test split, or
+you need to compare against baselines, predict on the saved test entity
+IDs (from Step 1b) and compute metrics against ground-truth labels.
+
+```python
+# Predict on held-out test entities
+test_preds = model.predict(query, indices=test_entity_ids, run_mode="best")
+
+# Merge with ground-truth labels saved from Step 1b
+merged = test_preds.merge(test_labels, on="ENTITY")
+
+# Compute metrics — example: MRR for multiclass
+def mrr(preds_df, true_col, pred_col):
+    """Mean Reciprocal Rank for multiclass predictions."""
+    ranks = []
+    for _, row in preds_df.iterrows():
+        prob_cols = [c for c in preds_df.columns if c.endswith("_PROB")]
+        ranked = sorted(prob_cols, key=lambda c: row[c], reverse=True)
+        true_label = str(row[true_col]) + "_PROB"
+        rank = ranked.index(true_label) + 1 if true_label in ranked else len(ranked)
+        ranks.append(1.0 / rank)
+    return sum(ranks) / len(ranks)
+
+print(f"MRR: {mrr(merged, 'TRUE_LABEL', 'TARGET_PRED'):.4f}")
+```
+
+For final evaluation, use `run_mode="best"` and `anchor_time="entity"` to
+match published benchmark conditions.
 
 | Task Type | Key Metrics |
 |---|---|
 | Binary classification | `auroc`, `precision`, `recall`, `f1`, `acc` |
+| Multiclass | `mrr`, `acc`, `f1` |
 | Regression | `rmse`, `mae`, `r2` |
-| Ranking | `mrr` |
-
-Use evaluation results to decide whether the prediction is trustworthy
-enough for downstream use. An AUC below 0.6 or R-squared below 0.1
-usually indicates the signal is too weak.
 
 ### Step 7: Explain (Optional)
 
@@ -410,7 +463,6 @@ with open("scratch/graph_ecom.pkl", "wb") as f:
 | `rfm.Graph.from_data()` | Build graph from DataFrames | `dict[str, DataFrame]` |
 | `rfm.Graph.from_snowflake()` | Build graph from Snowflake schema | `connection`, `database`, `schema` |
 | `rfm.Graph.from_snowflake_semantic_view()` | Build graph from Semantic View | `semantic_view_name`, `connection` |
-| `rfm.Graph.from_relbench()` | Build graph from RelBench dataset | `dataset` name (str) |
 | `graph.print_metadata()` | Display table/column metadata | — |
 | `graph.print_links()` | Display foreign-key relationships | — |
 | `graph.link()` | Add a foreign-key link | `src_table`, `fk_col`, `dst_table` |
@@ -441,12 +493,13 @@ with open("scratch/graph_ecom.pkl", "wb") as f:
 ## Checklist
 
 - [ ] RFM initialized and authenticated
+- [ ] Data prepared — splits concatenated, extra targets dropped, test labels masked and saved
 - [ ] Graph built from correct data source
-- [ ] `graph.print_metadata()` reviewed — PKs, types, and time columns correct
-- [ ] `graph.print_links()` reviewed — all FK relationships valid
+- [ ] Schema inspected directly (DataFrames, not just `print_metadata()`)
 - [ ] `graph.validate()` passes without errors
-- [ ] PQL query written with correct aggregation, time window, and entity
+- [ ] PQL query uses real table/column names from the data
 - [ ] Pre-flight checks passed (no nested aggs, 1-hop FK, non-negative window)
+- [ ] `indices` passed to `model.predict()` for `FOR EACH` queries
 - [ ] Prediction executed and output shape inspected
-- [ ] Evaluation metrics reviewed (if applicable)
+- [ ] Evaluation: quick check via `model.evaluate()` AND/OR held-out via saved test IDs
 - [ ] Results saved to `scratch/` for reproducibility

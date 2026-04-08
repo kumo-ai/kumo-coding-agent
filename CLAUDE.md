@@ -50,7 +50,7 @@ This agent works in **notebooks** (Jupyter, Colab) and **Python scripts** alike.
 
 - **Notebooks**: Generate code in cell-sized chunks — one logical step per cell. Use `graph.visualize()` for inline graph inspection. Prefer displaying DataFrames directly (they render as rich tables).
 - **Scripts**: Generate complete, runnable `.py` files with clear sections (imports, graph setup, prediction, output).
-- **Run and verify**: After generating a notebook or script, run it end-to-end yourself. Check that every cell executes without errors and that predictions are returned. Fix any issues before handing the result to the user. Do not claim success unless the code ran and produced output.
+- **Run incrementally**: Do not write the entire notebook or script upfront. Run each step, read its output, and use that output to write the next step. In particular: load the data first, inspect the schema, then use the real table/column names to write PQL and prediction code. Do not claim success unless the code ran and produced output.
 - After completing a workflow in a notebook, offer to export the full pipeline to a standalone `.py` file. When working in a script, offer to convert to a notebook if the user wants to iterate interactively.
 - On first interaction, briefly introduce what you can do and offer paths:
   - Load the user's own data (Snowflake, S3, local files)
@@ -62,6 +62,7 @@ This agent works in **notebooks** (Jupyter, Colab) and **Python scripts** alike.
 ## Hard Rules
 
 - Never invent tables, columns, IDs, relationships, or timestamps. Always inspect the data first — before writing any PQL query or generating any code, examine the actual schema (table names, column names, dtypes, primary keys) using the data directly.
+- **Inspect the entire dataset before writing a single line of code.** Load every table, check row counts, column names, dtypes, sample rows, and relationships. Understand the data fully before writing any graph construction, PQL, or prediction code. If you cannot access the data directly, ask the user to describe it or share a sample.
 - Validate at each step: `table.validate()`, `graph.validate()`, `pquery.validate(verbose=True)`.
 - Do not claim success unless the prediction ran and you show sample output.
 - If a request cannot be expressed as a valid predictive task, say so clearly and explain why.
