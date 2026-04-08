@@ -61,8 +61,8 @@ PREDICT users.membership_tier FOR EACH users.user_id
 Predict an aggregated value over a future (or past-to-future) time window.
 
 **Supported aggregations:**
-- RFM + Enterprise: `SUM`, `AVG`, `MIN`, `MAX`, `COUNT`
-- Enterprise only: `COUNT_DISTINCT`, `FIRST`, `LAST`, `LIST_DISTINCT`
+- RFM + Enterprise: `SUM`, `AVG`, `MIN`, `MAX`, `COUNT`, `LIST_DISTINCT`
+- Enterprise only: `COUNT_DISTINCT`, `FIRST`, `LAST`
 
 **Syntax:**
 
@@ -142,18 +142,18 @@ PREDICT SUM(orders.amount, 0, 30, days) FORECAST 12 TIMEFRAMES FOR EACH users.us
 - Only works with temporal (time-ranged) aggregation targets
 - Only works with numerical targets
 
-### Link Prediction / Multicategorical (Enterprise Only)
+### Link Prediction / Multicategorical
 
 Predict which related entities are most likely.
 
 ```
-PREDICT LIST_DISTINCT(orders.product_id, 0, 30, days) RANK TOP 5 FOR EACH users.user_id
+PREDICT LIST_DISTINCT(orders.product_id, 0, 30, days) FOR EACH users.user_id
 ```
 
 **Rules:**
-- `CLASSIFY` or `RANK` required for multicategorical targets (e.g., `LIST_DISTINCT`)
-- `RANK` requires `TOP K` to be specified
-- Used for link prediction and multi-label classification tasks
+- The target column of `LIST_DISTINCT` must be registered as a **foreign key** in the graph
+- Used for link prediction and recommendation tasks
+- Enterprise SDK also supports `RANK TOP K` and `CLASSIFY` modifiers for ranking output
 
 ---
 
@@ -337,7 +337,6 @@ These are valid PQL syntax but blocked in RFM mode:
 | `COUNT_DISTINCT` | Enterprise only | Blocked in RFM |
 | `FIRST` | Enterprise only | Blocked in RFM |
 | `LAST` | Enterprise only | Blocked in RFM |
-| `LIST_DISTINCT` | Enterprise only | Used for link prediction; blocked in RFM |
 
 ### Unsupported Aggregations
 
@@ -383,7 +382,7 @@ These do not exist in the PQL grammar:
 
 ## Quick Reference Card
 
-**Supported Aggregations:** `SUM`, `AVG`, `MIN`, `MAX`, `COUNT` (all modes); `COUNT_DISTINCT`, `FIRST`, `LAST`, `LIST_DISTINCT` (Enterprise only)
+**Supported Aggregations:** `SUM`, `AVG`, `MIN`, `MAX`, `COUNT`, `LIST_DISTINCT` (all modes); `COUNT_DISTINCT`, `FIRST`, `LAST` (Enterprise only)
 
 **Time Units:** `days`, `hours`, `minutes`, `months`
 

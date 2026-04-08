@@ -44,7 +44,6 @@ This document is a unified diagnostic reference for PQL query failures. Read it 
 |------|------|-------------|
 | D1 | COUNT_DISTINCT | Enterprise only — blocked in RFM |
 | D2 | FIRST / LAST | Enterprise only — blocked in RFM |
-| D3 | LIST_DISTINCT | Enterprise only — used for link prediction, blocked in RFM |
 | D4 | LIKE / Pattern Match | In PQL grammar, but blocked in RFM mode for string operations |
 | D4b | CONTAINS / STARTS WITH / ENDS WITH | In PQL grammar, but blocked in RFM mode |
 | D5 | RANK TOP K | Enterprise only — for multicategorical targets, blocked in RFM |
@@ -193,7 +192,7 @@ PREDICT COUNT_DISTINCT(orders.product_id, 0, 30, days) FOR EACH users.user_id
 PREDICT COUNT(orders.* WHERE orders.product_id IS NOT NULL, 0, 30, days) FOR EACH users.user_id
 ```
 
-**Rule:** In RFM mode, only `SUM`, `AVG`, `MIN`, `MAX`, `COUNT` are supported. Enterprise mode also supports `COUNT_DISTINCT`, `FIRST`, `LAST`, `LIST_DISTINCT`.
+**Rule:** In RFM mode, `SUM`, `AVG`, `MIN`, `MAX`, `COUNT`, and `LIST_DISTINCT` are supported. Enterprise mode also supports `COUNT_DISTINCT`, `FIRST`, `LAST`.
 
 ### 9. Cross-table Filters in WHERE
 
@@ -367,6 +366,6 @@ Before submitting a PQL query, verify each item:
 - [ ] `ASSUMING` is only used with **aggregation targets**, not static column predictions
 - [ ] String literals use **single quotes** (`'value'`, not `"value"`)
 - [ ] No unsupported operations: `ORDER BY`, `LIMIT`, `GROUP BY`, subqueries
-- [ ] If using RFM: no `COUNT_DISTINCT`, `FIRST`, `LAST`, `LIST_DISTINCT`, `LIKE`, `CONTAINS`
+- [ ] If using RFM: no `COUNT_DISTINCT`, `FIRST`, `LAST`, `LIKE`, `CONTAINS`
 - [ ] No nested aggregations
 - [ ] All referenced tables and columns **exist** in the semantic view
