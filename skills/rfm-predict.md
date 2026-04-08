@@ -189,7 +189,7 @@ Execute the query against the graph using KumoRFM.
 ```python
 model = rfm.KumoRFM(graph)
 
-# Basic prediction
+# Basic prediction (indices=None predicts for all entities in the graph)
 pred_df = model.predict(query, run_mode="fast")
 print(pred_df.head(10))
 print(f"Rows returned: {len(pred_df)}")
@@ -198,7 +198,7 @@ print(f"Rows returned: {len(pred_df)}")
 The returned DataFrame contains columns: `ENTITY`, `ANCHOR_TIMESTAMP`,
 `TARGET_PRED`, and class probabilities (e.g. `True_PROB`, `False_PROB`).
 
-**Predict for specific entities:**
+**Predict for specific entities (recommended — pass `indices` explicitly):**
 
 ```python
 pred_df = model.predict(query, indices=[101, 202, 303], run_mode="fast")
@@ -210,10 +210,16 @@ pred_df = model.predict(query, indices=[101, 202, 303], run_mode="fast")
 pred_df = model.predict(query, anchor_time=pd.Timestamp("2025-01-01"), run_mode="normal")
 ```
 
-**Per-entity timestamps (batch mode):**
+**Batch mode (for large entity sets):**
+
+Use `batch_mode()` when predicting for hundreds+ entities — it splits the
+request into batches, retries failures, and concatenates results automatically.
 
 ```python
-# Each entity uses its own time column value as anchor
+with model.batch_mode(batch_size="max", num_retries=1):
+    pred_df = model.predict(query, indices=all_ids, run_mode="fast")
+
+# Per-entity timestamps: each entity uses its own time column value as anchor
 with model.batch_mode(batch_size="max", num_retries=1):
     pred_df = model.predict(query, indices=all_ids, anchor_time="entity", run_mode="best")
 ```
@@ -229,6 +235,12 @@ pred_df = model.predict(query, num_neighbors=[8, 8], run_mode="fast")
 
 ```python
 pred_df = model.predict(query, use_prediction_time=True, run_mode="fast")
+```
+
+**Autoregressive lag features:**
+
+```python
+pred_df = model.predict(query, lag_timesteps=7, run_mode="fast")
 ```
 
 **Increase label search for strict filters:**
@@ -331,8 +343,8 @@ with open("scratch/graph_ecom.pkl", "wb") as f:
 | `graph.unlink()` | Remove a foreign-key link | `src_table`, `fk_col`, `dst_table` |
 | `graph.validate()` | Check graph for errors | — |
 | `rfm.KumoRFM(graph)` | Create model from graph | `graph`, `verbose` |
-| `model.predict()` | Run zero-shot prediction | `query`, `indices`, `run_mode`, `anchor_time`, `explain`, `num_neighbors`, `max_pq_iterations`, `use_prediction_time` |
-| `model.evaluate()` | Evaluate prediction quality | `query`, `run_mode`, `metrics`, `anchor_time`, `num_neighbors` |
+| `model.predict()` | Run zero-shot prediction | `query`, `indices`, `run_mode`, `anchor_time`, `explain`, `num_neighbors`, `max_pq_iterations`, `use_prediction_time`, `lag_timesteps`, `inference_config` |
+| `model.evaluate()` | Evaluate prediction quality | `query`, `run_mode`, `metrics`, `anchor_time`, `num_neighbors`, `lag_timesteps`, `inference_config` |
 | `model.batch_mode()` | Context manager for large batches | `batch_size="max"`, `num_retries=1` |
 | `model.get_train_table()` | Debug training labels | `query`, `size`, `anchor_time`, `max_iterations` |
 | `model.is_valid_entity()` | Check entity validity | `query`, `indices`, `anchor_time` |

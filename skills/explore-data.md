@@ -23,6 +23,11 @@ Before anything else, discover what's in the schema.
 **Enterprise SDK:**
 
 ```python
+import kumoai
+kumoai.init(url="https://app.kumo.ai", api_key="YOUR_API_KEY")
+
+connector = ...  # e.g. kumoai.SnowflakeConnector(...), S3Connector(...), etc.
+
 print(connector.table_names())
 # ['CUSTOMERS', 'ORDERS', 'PRODUCTS', 'ORDER_ITEMS', 'RETURNS', ...]
 ```

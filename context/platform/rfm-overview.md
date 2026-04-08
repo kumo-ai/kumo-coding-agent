@@ -273,6 +273,8 @@ pred_df = model.predict(
     max_pq_iterations=20,
     random_seed=42,
     use_prediction_time=False,
+    lag_timesteps=0,
+    inference_config=None,
 )
 ```
 
@@ -289,6 +291,8 @@ pred_df = model.predict(
 | `max_pq_iterations` | `int` | `10` | Max iterations to find valid training labels. Increase (e.g. 200) for queries with strict filters. |
 | `random_seed` | `int \| None` | `42` | Seed for reproducibility. `None` = non-deterministic. |
 | `use_prediction_time` | `bool` | `False` | Use anchor timestamp as a model feature. Enable for **time-series forecasting** where prediction time matters. |
+| `lag_timesteps` | `int` | `0` | Number of past timesteps included as lagged features. Use for autoregressive tasks where recent target values improve prediction. |
+| `inference_config` | `InferenceConfig \| dict \| None` | `None` | Inference configuration (from `kumoapi.rfm`). Includes `RegressionInferenceConfig` and `ClassificationInferenceConfig` for task-specific settings. |
 
 **Returns**: `pd.DataFrame` with columns `ENTITY`, `ANCHOR_TIMESTAMP`, `TARGET_PRED`, and class probabilities (e.g. `True_PROB`, `False_PROB` for binary).
 
@@ -327,6 +331,8 @@ metrics_df = model.evaluate(
     num_neighbors=None,
     max_pq_iterations=20,
     use_prediction_time=False,
+    lag_timesteps=0,
+    inference_config=None,
 )
 ```
 
@@ -338,7 +344,11 @@ Available metrics: `auroc`, `auprc`, `ap`, `f1`, `acc`, `precision`, `recall` (b
 
 ### `model.batch_mode()` — Large-Scale Predictions
 
-Context manager for predicting on large entity sets. Handles batching and retries automatically.
+Context manager for predicting on large entity sets. Use when passing
+hundreds or thousands of entity IDs via `indices` — without batch mode,
+large requests may exceed server limits or time out. The context manager
+splits the request into batches, sends them sequentially, retries failures,
+and concatenates results into a single DataFrame.
 
 ```python
 with model.batch_mode(batch_size="max", num_retries=1):
@@ -406,21 +416,39 @@ result = model.predict(query, explain=rfm.ExplainConfig(skip_summary=True), run_
 
 ### TaskTable Flow
 
-Use when you have explicit context/prediction rows:
+Use `TaskTable` when you already have explicit context (training) and
+prediction rows prepared as DataFrames — for example, a custom train/test
+split or a task that is easier to express as a DataFrame than as a PQL query.
+For most use cases, prefer query-driven `model.predict()` instead.
 
 ```python
 task = rfm.TaskTable(
-    task_type=...,
-    context_df=context_df,
-    pred_df=pred_df,
-    entity_table_name="users",
-    entity_column="user_id",
-    target_column="target",
-    time_column="anchor_time",
+    task_type=...,               # TaskType enum (e.g. binary classification, regression)
+    context_df=context_df,       # DataFrame of labeled context (training) examples
+    pred_df=pred_df,             # DataFrame of entities to predict for
+    entity_table_name="users",   # Entity table in the graph
+    entity_column="user_id",     # Column matching entity PKs
+    target_column="target",      # Column with labels (in context_df) or to predict (in pred_df)
+    time_column="anchor_time",   # Optional: column for per-row anchor timestamps
+    step_size=None,              # Optional: step size for time-based operations
+    num_forecasts=1,             # Optional: number of forecast steps (default 1)
 )
+
 pred_df = model.predict_task(task, run_mode="fast")
-metrics_df = model.evaluate_task(task, run_mode="fast")
+metrics_df = model.evaluate_task(task, run_mode="fast")  # Only works if pred_df contains target_column
 ```
+
+| Parameter | Type | Default | Purpose |
+|-----------|------|---------|---------|
+| `task_type` | `TaskType` | required | Task type enum (binary classification, regression, etc.) |
+| `context_df` | `pd.DataFrame` | required | Labeled examples the model uses as context |
+| `pred_df` | `pd.DataFrame` | required | Rows to generate predictions for |
+| `entity_table_name` | `str \| Sequence[str]` | required | Entity table name(s) in the graph. For link prediction, pass both entity and target table names. |
+| `entity_column` | `str` | required | Column matching entity PKs in the graph |
+| `target_column` | `str` | required | Label column in context_df; prediction target in pred_df |
+| `time_column` | `str \| None` | `None` | Per-row anchor time column. If set, each row uses its own timestamp. |
+| `step_size` | `int \| None` | `None` | Step size for time-based operations |
+| `num_forecasts` | `int` | `1` | Number of forecast steps |
 
 ### Advanced Patterns
 
@@ -447,8 +475,8 @@ pred_df = model.predict("PREDICT context.target=1 FOR EACH context.index")
 | Method | Key Parameters | Returns |
 |--------|---------------|---------|
 | `rfm.KumoRFM(graph)` | `verbose=True` | Model instance |
-| `model.predict(query)` | `indices`, `run_mode`, `anchor_time`, `explain`, `num_neighbors`, `max_pq_iterations`, `use_prediction_time` | `DataFrame` or `Explanation` |
-| `model.evaluate(query)` | `metrics`, `run_mode`, `anchor_time`, `num_neighbors`, `max_pq_iterations`, `use_prediction_time` | `DataFrame` of metrics |
+| `model.predict(query)` | `indices`, `run_mode`, `anchor_time`, `explain`, `num_neighbors`, `max_pq_iterations`, `use_prediction_time`, `lag_timesteps`, `inference_config` | `DataFrame` or `Explanation` |
+| `model.evaluate(query)` | `metrics`, `run_mode`, `anchor_time`, `num_neighbors`, `max_pq_iterations`, `use_prediction_time`, `lag_timesteps`, `inference_config` | `DataFrame` of metrics |
 | `model.batch_mode()` | `batch_size="max"`, `num_retries=1` | Context manager |
 | `model.get_train_table(query)` | `size`, `anchor_time`, `max_iterations` | `DataFrame` of labels |
 | `model.retry()` | `num_retries=1` | Context manager |
