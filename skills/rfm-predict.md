@@ -137,25 +137,29 @@ graph.infer_metadata()
 graph.infer_links()
 ```
 
-**Option E: Sample dataset from RelBench**
+**Option E: Sample dataset (RelBench / SALT)**
 
-Use a pre-built benchmark dataset for quick experimentation when the user
-doesn't have their own data yet or wants to try the platform first.
+For experimentation with a known dataset, download the data and load it
+as DataFrames so you can inspect the schema before building the graph.
+Do not use `from_relbench()` as a shortcut — it skips the data inspection
+step.
 
 ```python
-# Requires: pip install pooch
-graph = rfm.Graph.from_relbench("f1")
-graph.print_metadata()
-graph.print_links()
+# Example: load SALT from HuggingFace
+from datasets import load_dataset
+ds = load_dataset("SAP/SALT")
+
+# Convert to pandas DataFrames — inspect each table
+for table_name in ds:
+    df = ds[table_name].to_pandas()
+    print(f"\n{table_name}: {len(df)} rows, columns: {list(df.columns)}")
+    print(df.dtypes)
 ```
 
-Valid dataset names: `"f1"`, `"hm"`, `"avito"`, `"stack"`, `"amazon"`,
-`"trial"`, `"salt"` (prefix `rel-` is optional, e.g., `"rel-f1"` also works).
-Datasets are cached locally after first download (`~/.cache/relbench/`).
-If the name is invalid, the error message suggests valid options.
+Then build the graph with `from_data()` (Option A) using the DataFrames.
 
-- **RelBench** (Stanford benchmark for relational deep learning): https://relbench.stanford.edu/start/
-- **SALT** (SAP enterprise supply chain dataset): https://huggingface.co/datasets/SAP/SALT
+- **RelBench** (Stanford benchmark): https://relbench.stanford.edu/start/
+- **SALT** (SAP enterprise supply chain): https://huggingface.co/datasets/SAP/SALT
 
 ### Step 3: Validate Graph
 
@@ -207,10 +211,11 @@ graph.validate()
 
 ### Step 4: Write PQL Query
 
-**Do not write the PQL query until you have run Steps 2–3 and seen the
-actual schema.** Run `graph.print_metadata()` and `graph.print_links()`,
-read the output, then use the real table names, column names, and primary
-keys in the query. Never guess or use placeholders.
+**Do not write the PQL query until you have inspected the actual data.**
+Examine the DataFrames or source tables directly (`df.columns`, `df.dtypes`,
+`df.head()`) to learn the real table names, column names, and primary keys.
+Never rely solely on `print_metadata()` — always verify against the data
+itself. Never guess or use placeholders.
 
 Map the natural-language question to the correct PQL task family, then
 write the query string.
@@ -262,16 +267,22 @@ use `batch_mode()`.
 ```python
 model = rfm.KumoRFM(graph)
 
-# Basic prediction (indices=None predicts for all entities in the graph)
-pred_df = model.predict(query, run_mode="fast")
+# FOR EACH queries require indices — pass entity IDs explicitly
+pred_df = model.predict(query, indices=entity_ids, run_mode="fast")
 print(pred_df.head(10))
 print(f"Rows returned: {len(pred_df)}")
 ```
 
+**`indices` is required for `FOR EACH` queries.** The SDK cannot enumerate
+all entities automatically — you must pass the list of entity IDs. Get them
+from the source data (e.g., `df["user_id"].tolist()` for pandas, or
+`SELECT DISTINCT pk FROM table` for Snowflake/SQLite). For single-entity
+queries (`FOR table.pk = 42`), `indices` is optional.
+
 The returned DataFrame contains columns: `ENTITY`, `ANCHOR_TIMESTAMP`,
 `TARGET_PRED`, and class probabilities (e.g. `True_PROB`, `False_PROB`).
 
-**Predict for specific entities (recommended — pass `indices` explicitly):**
+**Predict for a subset of entities:**
 
 ```python
 pred_df = model.predict(query, indices=[101, 202, 303], run_mode="fast")
@@ -410,7 +421,6 @@ with open("scratch/graph_ecom.pkl", "wb") as f:
 | `rfm.Graph.from_data()` | Build graph from DataFrames | `dict[str, DataFrame]` |
 | `rfm.Graph.from_snowflake()` | Build graph from Snowflake schema | `connection`, `database`, `schema` |
 | `rfm.Graph.from_snowflake_semantic_view()` | Build graph from Semantic View | `semantic_view_name`, `connection` |
-| `rfm.Graph.from_relbench()` | Build graph from RelBench dataset | `dataset` name (str) |
 | `graph.print_metadata()` | Display table/column metadata | — |
 | `graph.print_links()` | Display foreign-key relationships | — |
 | `graph.link()` | Add a foreign-key link | `src_table`, `fk_col`, `dst_table` |

@@ -341,11 +341,11 @@ pred_df = model.predict(
 **Examples:**
 
 ```python
-# Basic prediction
-pred_df = model.predict(query, run_mode="fast")
-
-# With entity filtering
+# indices is REQUIRED for FOR EACH queries (SDK cannot enumerate all entities)
 pred_df = model.predict(query, indices=[42, 123, 456], run_mode="fast")
+
+# For single-entity queries (FOR table.pk = 42), indices is optional
+pred_df = model.predict(single_entity_query, run_mode="fast")
 
 # With custom anchor time
 pred_df = model.predict(query, anchor_time=pd.Timestamp("2025-01-01"), run_mode="normal")
