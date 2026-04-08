@@ -16,31 +16,44 @@ A portable collection of markdown files that teaches your LLM tool how to use th
 
 | Tool | Install | Required for |
 |------|---------|--------------|
-| **GitHub CLI** | `brew install gh && gh auth login` | All slash commands |
+| **GitHub CLI** | `brew install gh && gh auth login` | Slash commands (`/ds-agent-import`, `/ds-agent-issue`, `/ds-agent-pr`) |
 | **kumoai** | `pip install kumoai` | Running predictions (not the agent itself) |
 
-### Option 1: Import into your project (recommended)
+### Claude Code
 
-From any project directory in **Claude Code** or **Codex**:
-
-```
-/ds-agent-import
-```
-
-This downloads `ds-agent/` into your project, wires up your `CLAUDE.md`, and you're ready to go.
-
-### Option 2: Clone the repo
+Clone the repo into your project, or use `/ds-agent-import` if slash commands
+are installed globally. Claude Code reads `CLAUDE.md` as the entry point and
+auto-discovers slash commands from `.claude/skills/`.
 
 ```bash
-git clone https://github.com/kumo-ai/DS-agent.git
-cd DS-agent
+git clone https://github.com/kumo-ai/DS-agent.git ds-agent
+# Or from within Claude Code: /ds-agent-import
 ```
 
-Open the folder in Claude Code, Cursor, Codex, or any tool that reads markdown.
+### Codex
+
+Clone the repo into your project. Codex reads `CLAUDE.md` and auto-discovers
+slash commands from `.agents/skills/`. Always provide arguments inline —
+Codex runs headless with no interactive prompts.
+
+```bash
+git clone https://github.com/kumo-ai/DS-agent.git ds-agent
+```
+
+### Cursor
+
+Clone the repo into your project. Cursor reads `CLAUDE.md` and all context
+docs and skills work. Slash commands are not available in Cursor — use the
+manual clone.
+
+```bash
+git clone https://github.com/kumo-ai/DS-agent.git ds-agent
+```
 
 ### Global slash commands (optional)
 
-To make commands available from **any** project on your machine:
+To make `/ds-agent-import`, `/ds-agent-issue`, and `/ds-agent-pr` available
+from **any** project (Claude Code and Codex only):
 
 ```bash
 # From the DS-agent repo
@@ -49,8 +62,6 @@ make install-slash-commands
 # To remove later
 make uninstall-slash-commands
 ```
-
-This symlinks skill definitions to `~/.claude/skills/` and `~/.agents/skills/`.
 
 ---
 
@@ -108,17 +119,6 @@ Fixes a skill or context doc and opens a pull request on `kumo-ai/DS-agent`.
 ```
 
 Creates a branch, makes the edit, runs verification checks, and opens the PR — all in one command. Omit the description in Claude Code to be prompted interactively.
-
----
-
-## Tool Compatibility
-
-| Tool | How it works |
-|------|-------------|
-| **Claude Code** | Reads `CLAUDE.md` + discovers `.claude/skills/` for slash commands |
-| **Codex** | Reads `CLAUDE.md` + discovers `.agents/skills/` for slash commands |
-| **Cursor** | Reads `CLAUDE.md` (no slash commands, but all context and skills work) |
-| **Any LLM tool** | Works if it reads markdown — `CLAUDE.md` is the entry point |
 
 ---
 
