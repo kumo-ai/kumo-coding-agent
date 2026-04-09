@@ -235,6 +235,8 @@ graph.validate()
 **Do not write the PQL query until you have inspected the actual data.**
 Examine the DataFrames or source tables directly (`df.columns`, `df.dtypes`,
 `df.head()`) to learn the real table names, column names, and primary keys.
+Verify the FK relationships in the graph — the entity table in `FOR EACH`
+must be linked to the target table via a direct foreign key path.
 Never rely solely on `print_metadata()` — always verify against the data
 itself. Never guess or use placeholders.
 
