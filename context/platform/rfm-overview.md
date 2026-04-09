@@ -312,7 +312,7 @@ pred_df = model.predict(
     run_mode="fast",
     num_neighbors=None,
     num_hops=2,
-    max_pq_iterations=20,
+    max_pq_iterations=10,
     random_seed=42,
     use_prediction_time=False,
     lag_timesteps=0,
@@ -336,7 +336,10 @@ pred_df = model.predict(
 | `lag_timesteps` | `int` | `0` | Number of past timesteps included as lagged features. Use for autoregressive tasks where recent target values improve prediction. |
 | `inference_config` | `InferenceConfig \| dict \| None` | `None` | Inference configuration (from `kumoapi.rfm`). Includes `RegressionInferenceConfig` and `ClassificationInferenceConfig` for task-specific settings. |
 
-**Returns**: `pd.DataFrame` with columns `ENTITY`, `ANCHOR_TIMESTAMP`, `TARGET_PRED`, and class probabilities (e.g. `True_PROB`, `False_PROB` for binary).
+**Returns**: `pd.DataFrame`. Columns depend on task type:
+- Binary classification: `ENTITY`, `ANCHOR_TIMESTAMP`, `TARGET_PRED`, `True_PROB`, `False_PROB`
+- Regression / forecasting: `ENTITY`, `ANCHOR_TIMESTAMP`, `TARGET_PRED`
+- Multiclass classification: `ENTITY`, `ANCHOR_TIMESTAMP`, `CLASS`, `SCORE`, `PREDICTED` (one row per class per entity)
 
 **Examples:**
 
@@ -375,7 +378,7 @@ metrics_df = model.evaluate(
     run_mode="fast",
     anchor_time=None,
     num_neighbors=None,
-    max_pq_iterations=20,
+    max_pq_iterations=10,
     use_prediction_time=False,
     lag_timesteps=0,
     inference_config=None,

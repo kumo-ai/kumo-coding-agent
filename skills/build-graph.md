@@ -179,7 +179,7 @@ Review the inferred links. If any are incorrect or missing:
 
 ```python
 # Add a missing link
-graph.link("orders", "user_id", "users", "user_id")
+graph.link("orders", "user_id", "users")
 
 # Remove an incorrect link (re-create graph without it)
 ```
@@ -258,7 +258,7 @@ print(edge_stats)
 
 ```python
 # RFM
-graph.link("orders", "user_id", "users", "user_id")
+graph.link("orders", "user_id", "users")
 
 # SDK: add the edge to the Graph constructor and recreate
 ```
@@ -267,7 +267,7 @@ graph.link("orders", "user_id", "users", "user_id")
 
 ```python
 # RFM: set after inference
-graph.tables["orders"].time_column = "order_date"
+graph["orders"].time_column = "order_date"
 
 # SDK: specify in Table constructor
 orders_table = kumoai.Table.from_source_table(
