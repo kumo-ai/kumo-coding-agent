@@ -43,6 +43,27 @@ Verify connectivity before proceeding:
 # If the key is invalid you will see an AuthenticationError immediately.
 ```
 
+### Step 1b: Prepare Data
+
+Before building the graph, clean the data so the model sees only what it
+should. These apply to any dataset — not just benchmarks.
+
+- **Concatenate train/test splits**: RFM needs the full relational database.
+  Merge all splits into one table per entity. Save test entity IDs and
+  ground-truth labels separately for held-out evaluation later:
+  ```python
+  test_entity_ids = test_df["pk_column"].tolist()
+  test_labels = test_df[["pk_column", "target_column"]].copy()
+  full_df = pd.concat([train_df, test_df], ignore_index=True)
+  ```
+- **Drop auto-generated columns**: Remove `__index_level_0__`, surrogate
+  row IDs, or any column not part of the real schema.
+- **Drop other target columns**: If the dataset defines multiple prediction
+  targets, remove all except the one you're predicting. Otherwise they
+  leak information to the model.
+- **Mask test labels**: Set the target column to `None` for all test rows.
+  This prevents the model from seeing future answers during prediction.
+
 ### Step 2: Build Graph
 
 Choose one of 5 paths based on where your data lives.
@@ -344,30 +365,51 @@ print(labels_df.head(10))
 print(f"Label distribution:\n{labels_df['TARGET'].value_counts()}")
 ```
 
-### Step 6: Evaluate (Optional)
+### Step 6: Evaluate
 
-Run evaluation to get quality metrics. This performs an automatic
-train/test split on historical data.
+**Quick check** — `model.evaluate()` creates its own internal train/test
+split. Good for fast iteration during exploration, but not suitable for
+benchmarking or comparing to published results.
 
 ```python
 metrics_df = model.evaluate(query, run_mode="fast")
 print(metrics_df)
-
-# Request specific metrics
-metrics_df = model.evaluate(query, run_mode="fast", metrics=["auroc", "f1"])
 ```
 
-Returned metrics depend on task type:
+**Held-out evaluation** — when the dataset has an official test split, or
+you need to compare against baselines, predict on the saved test entity
+IDs (from Step 1b) and compute metrics against ground-truth labels.
+
+```python
+# Predict on held-out test entities
+test_preds = model.predict(query, indices=test_entity_ids, run_mode="best")
+
+# Merge with ground-truth labels saved from Step 1b
+merged = test_preds.merge(test_labels, on="ENTITY")
+
+# Compute metrics — example: MRR for multiclass
+def mrr(preds_df, true_col, pred_col):
+    """Mean Reciprocal Rank for multiclass predictions."""
+    ranks = []
+    for _, row in preds_df.iterrows():
+        prob_cols = [c for c in preds_df.columns if c.endswith("_PROB")]
+        ranked = sorted(prob_cols, key=lambda c: row[c], reverse=True)
+        true_label = str(row[true_col]) + "_PROB"
+        rank = ranked.index(true_label) + 1 if true_label in ranked else len(ranked)
+        ranks.append(1.0 / rank)
+    return sum(ranks) / len(ranks)
+
+print(f"MRR: {mrr(merged, 'TRUE_LABEL', 'TARGET_PRED'):.4f}")
+```
+
+For final evaluation, use `run_mode="best"` and `anchor_time="entity"` to
+match published benchmark conditions.
 
 | Task Type | Key Metrics |
 |---|---|
 | Binary classification | `auroc`, `precision`, `recall`, `f1`, `acc` |
+| Multiclass | `mrr`, `acc`, `f1` |
 | Regression | `rmse`, `mae`, `r2` |
-| Ranking | `mrr` |
-
-Use evaluation results to decide whether the prediction is trustworthy
-enough for downstream use. An AUC below 0.6 or R-squared below 0.1
-usually indicates the signal is too weak.
 
 ### Step 7: Explain (Optional)
 
@@ -451,12 +493,13 @@ with open("scratch/graph_ecom.pkl", "wb") as f:
 ## Checklist
 
 - [ ] RFM initialized and authenticated
+- [ ] Data prepared — splits concatenated, extra targets dropped, test labels masked and saved
 - [ ] Graph built from correct data source
-- [ ] `graph.print_metadata()` reviewed — PKs, types, and time columns correct
-- [ ] `graph.print_links()` reviewed — all FK relationships valid
+- [ ] Schema inspected directly (DataFrames, not just `print_metadata()`)
 - [ ] `graph.validate()` passes without errors
-- [ ] PQL query written with correct aggregation, time window, and entity
+- [ ] PQL query uses real table/column names from the data
 - [ ] Pre-flight checks passed (no nested aggs, 1-hop FK, non-negative window)
+- [ ] `indices` passed to `model.predict()` for `FOR EACH` queries
 - [ ] Prediction executed and output shape inspected
-- [ ] Evaluation metrics reviewed (if applicable)
+- [ ] Evaluation: quick check via `model.evaluate()` AND/OR held-out via saved test IDs
 - [ ] Results saved to `scratch/` for reproducibility

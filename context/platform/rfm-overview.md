@@ -362,6 +362,10 @@ pred_df = model.predict(query, num_neighbors=[8, 8], run_mode="fast")
 
 ### `model.evaluate()` — Zero-Shot Evaluation
 
+**Note:** `model.evaluate()` creates its own internal train/test split. For
+benchmarking against published results, predict on the official held-out
+test set and compute metrics manually (see `skills/rfm-predict.md` Step 6).
+
 Same parameters as `predict()` except no `indices` or `explain`, plus `metrics`:
 
 ```python
