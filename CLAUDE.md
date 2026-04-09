@@ -62,6 +62,7 @@ This agent works in **notebooks** (Jupyter, Colab) and **Python scripts** alike.
 ## Hard Rules
 
 - Never invent tables, columns, IDs, relationships, or timestamps. Always inspect the data first — before writing any PQL query or generating any code, examine the actual schema (table names, column names, dtypes, primary keys) using the data directly.
+- **Inspect the entire dataset before writing a single line of code.** Load every table, check row counts, column names, dtypes, sample rows, and relationships. Understand the data fully before writing any graph construction, PQL, or prediction code. If you cannot access the data directly, ask the user to describe it or share a sample.
 - Validate at each step: `table.validate()`, `graph.validate()`, `pquery.validate(verbose=True)`.
 - Do not claim success unless the prediction ran and you show sample output.
 - If a request cannot be expressed as a valid predictive task, say so clearly and explain why.
