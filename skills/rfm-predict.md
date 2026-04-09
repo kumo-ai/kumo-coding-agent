@@ -283,9 +283,10 @@ query = (
 | Balanced accuracy | `"normal"` | ~5,000 | Minutes |
 | Maximum accuracy / final evaluation | `"best"` | ~10,000 | Several minutes |
 
-Default to `"fast"` for first-time predictions. Also ask: "Do you need
-predictions for a small set of entities or a large batch?" — if large,
-use `batch_mode()`.
+Default to `"best"` for the highest accuracy. If the user wants faster
+results, offer to switch to `"fast"` or `"normal"`. Also ask: "Do you
+need predictions for a small set of entities or a large batch?" — if
+large, use `batch_mode()`.
 
 ```python
 model = rfm.KumoRFM(graph)
@@ -302,8 +303,13 @@ from the source data (e.g., `df["user_id"].tolist()` for pandas, or
 `SELECT DISTINCT pk FROM table` for Snowflake/SQLite). For single-entity
 queries (`FOR table.pk = 42`), `indices` is optional.
 
-The returned DataFrame contains columns: `ENTITY`, `ANCHOR_TIMESTAMP`,
-`TARGET_PRED`, and class probabilities (e.g. `True_PROB`, `False_PROB`).
+**Output columns depend on task type:**
+
+| Task Type | Key Columns |
+|-----------|-------------|
+| Binary classification | `ENTITY`, `ANCHOR_TIMESTAMP`, `TARGET_PRED`, `True_PROB`, `False_PROB` |
+| Regression / forecasting | `ENTITY`, `ANCHOR_TIMESTAMP`, `TARGET_PRED` |
+| Multiclass classification | `ENTITY`, `ANCHOR_TIMESTAMP`, `CLASS`, `SCORE`, `PREDICTED` (one row per class per entity; `PREDICTED` = True for top-1 prediction) |
 
 **Predict for a subset of entities:**
 
@@ -389,19 +395,24 @@ test_preds = model.predict(query, indices=test_entity_ids, run_mode="best")
 # Merge with ground-truth labels saved from Step 1b
 merged = test_preds.merge(test_labels, on="ENTITY")
 
-# Compute metrics — example: MRR for multiclass
-def mrr(preds_df, true_col, pred_col):
-    """Mean Reciprocal Rank for multiclass predictions."""
-    ranks = []
-    for _, row in preds_df.iterrows():
-        prob_cols = [c for c in preds_df.columns if c.endswith("_PROB")]
-        ranked = sorted(prob_cols, key=lambda c: row[c], reverse=True)
-        true_label = str(row[true_col]) + "_PROB"
-        rank = ranked.index(true_label) + 1 if true_label in ranked else len(ranked)
-        ranks.append(1.0 / rank)
-    return sum(ranks) / len(ranks)
+# --- Multiclass: output has CLASS, SCORE, PREDICTED columns ---
+# Get top-1 prediction per entity (row where PREDICTED == True)
+top1 = merged[merged["PREDICTED"] == True][["ENTITY", "CLASS"]].rename(columns={"CLASS": "PRED"})
+eval_df = top1.merge(test_labels, on="ENTITY")
 
-print(f"MRR: {mrr(merged, 'TRUE_LABEL', 'TARGET_PRED'):.4f}")
+# MRR: rank of the true class by SCORE
+def mrr(preds_df, entity_col, class_col, score_col, true_labels):
+    """Mean Reciprocal Rank for multiclass predictions."""
+    rrs = []
+    for entity_id, group in preds_df.groupby(entity_col):
+        true_class = true_labels.loc[true_labels[entity_col] == entity_id].iloc[0]["target_column"]
+        ranked = group.sort_values(score_col, ascending=False)[class_col].tolist()
+        rank = ranked.index(true_class) + 1 if true_class in ranked else len(ranked)
+        rrs.append(1.0 / rank)
+    return sum(rrs) / len(rrs)
+
+# --- Binary / Regression: output has TARGET_PRED column ---
+# accuracy = (merged["TARGET_PRED"] == merged["true_col"]).mean()
 ```
 
 For final evaluation, use `run_mode="best"` and `anchor_time="entity"` to
@@ -482,7 +493,7 @@ with open("scratch/graph_ecom.pkl", "wb") as f:
 | Error | Cause | Fix |
 |---|---|---|
 | `AuthenticationError` | Invalid or expired API key | Regenerate key and re-run `rfm.init()` |
-| `GraphValidationError: no primary key` | Table missing a detected PK | Set PK explicitly: `graph["table"].set_primary_key("col")` |
+| `GraphValidationError: no primary key` | Table missing a detected PK | Set PK explicitly: `graph["table"].primary_key = "col"` |
 | `GraphValidationError: no time column` | Temporal query but target table has no datetime column | Verify column type or cast to timestamp before building graph |
 | `QueryValidationError: column not found` | Typo in table or column name in PQL | Run `graph["table"].print_metadata()` to list valid columns |
 | `QueryValidationError: multi-hop FK path` | Entity and target are more than 1 FK hop apart | Join tables in SQL first to create a direct relationship |
