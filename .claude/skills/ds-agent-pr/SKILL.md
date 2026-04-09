@@ -56,7 +56,7 @@ git checkout -b ds-agent/<slug>
 # WORK_DIR = current directory
 ```
 
-**If NO** (e.g., running from a project that used ds-agent-import):
+**If NO** (e.g., running from a project that cloned ds-agent):
 ```bash
 WORK_DIR=$(mktemp -d)
 git clone --filter=blob:none --depth=1 \

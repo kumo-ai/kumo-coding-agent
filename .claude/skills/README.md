@@ -1,10 +1,9 @@
 # DS-agent Command Skills
 
-Slash commands available when working in this repo with Claude Code or Codex.
+Commands available when working in this repo with Claude Code or Codex.
 
 | Command | Purpose |
 |---------|---------|
-| `/ds-agent-import` | Download DS-agent from GitHub into your project |
 | `/ds-agent-issue [description]` | Report a gap, bug, or feature request |
 | `/ds-agent-pr [description]` | Fix a skill/doc and open a PR |
 

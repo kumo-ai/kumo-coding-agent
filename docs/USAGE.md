@@ -16,51 +16,35 @@ A portable collection of markdown files that teaches your LLM tool how to use th
 
 | Tool | Install | Required for |
 |------|---------|--------------|
-| **GitHub CLI** | `brew install gh && gh auth login` | Slash commands (`/ds-agent-import`, `/ds-agent-issue`, `/ds-agent-pr`) |
+| **GitHub CLI** | `brew install gh && gh auth login` | `/ds-agent-issue` and `/ds-agent-pr` commands |
 | **kumoai** | `pip install kumoai` | Running predictions (not the agent itself) |
 
 ### Claude Code
 
-Clone the repo into your project, or use `/ds-agent-import` if slash commands
-are installed globally. Claude Code reads `CLAUDE.md` as the entry point and
-auto-discovers slash commands from `.claude/skills/`.
+Clone the repo into your project, then add a reference to your project's `CLAUDE.md`:
 
 ```bash
+cd your-project
 git clone https://github.com/kumo-ai/DS-agent.git ds-agent
-# Or from within Claude Code: /ds-agent-import
+echo 'Also read ds-agent/CLAUDE.md for Kumo data science agent capabilities.' >> CLAUDE.md
 ```
 
 ### Codex
 
-Clone the repo into your project. Codex reads `CLAUDE.md` and auto-discovers
-slash commands from `.agents/skills/`. Always provide arguments inline —
-Codex runs headless with no interactive prompts.
+Clone the repo into your project. Codex reads `AGENTS.md` which points to `CLAUDE.md`.
 
 ```bash
+cd your-project
 git clone https://github.com/kumo-ai/DS-agent.git ds-agent
 ```
 
 ### Cursor
 
-Clone the repo into your project. Cursor reads `CLAUDE.md` and all context
-docs and skills work. Slash commands are not available in Cursor — use the
-manual clone.
+Clone the repo into your project. Cursor reads `.cursor/rules/` automatically.
 
 ```bash
+cd your-project
 git clone https://github.com/kumo-ai/DS-agent.git ds-agent
-```
-
-### Global slash commands (optional)
-
-To make `/ds-agent-import`, `/ds-agent-issue`, and `/ds-agent-pr` available
-from **any** project (Claude Code and Codex only):
-
-```bash
-# From the DS-agent repo
-make install-slash-commands
-
-# To remove later
-make uninstall-slash-commands
 ```
 
 ---
@@ -80,22 +64,9 @@ The agent reads `CLAUDE.md` as its routing table, then loads only the relevant c
 
 ---
 
-## Slash Commands
+## Commands
 
-Three commands are available in Claude Code and Codex:
-
-### `/ds-agent-import`
-
-Downloads DS-agent from GitHub into your current project.
-
-```
-/ds-agent-import
-```
-
-- Downloads `ds-agent/` from `kumo-ai/DS-agent@main`
-- Adds a reference to your project's `CLAUDE.md`
-- Adds scratch files to `.gitignore`
-- No local clone of DS-agent needed
+Two commands are available in Claude Code and Codex for reporting issues and contributing fixes:
 
 ### `/ds-agent-issue [description]`
 
@@ -104,7 +75,6 @@ Reports a gap, bug, or feature request as a GitHub issue on `kumo-ai/DS-agent`.
 ```
 /ds-agent-issue agent didn't know about Databricks Unity Catalog options
 /ds-agent-issue pql-syntax.md says MODE is a valid aggregation but it isn't
-/ds-agent-issue add a healthcare vertical
 ```
 
 Omit the description in Claude Code to be prompted interactively. In Codex (headless), always provide it inline.
@@ -118,7 +88,16 @@ Fixes a skill or context doc and opens a pull request on `kumo-ai/DS-agent`.
 /ds-agent-pr fix the time unit list in pql-syntax.md
 ```
 
-Creates a branch, makes the edit, runs verification checks, and opens the PR — all in one command. Omit the description in Claude Code to be prompted interactively.
+Creates a branch, makes the edit, runs verification checks, and opens the PR — all in one command.
+
+### Global install (optional)
+
+To make commands available from **any** project (Claude Code and Codex only):
+
+```bash
+make install-slash-commands    # symlinks to ~/.claude/skills/ and ~/.agents/skills/
+make uninstall-slash-commands  # remove
+```
 
 ---
 
@@ -127,6 +106,8 @@ Creates a branch, makes the edit, runs verification checks, and opens the PR —
 ```
 ds-agent/
 ├── CLAUDE.md              # Entry point and routing table
+├── AGENTS.md              # Codex entry point (points to CLAUDE.md)
+├── .cursor/rules/         # Cursor entry point (points to CLAUDE.md)
 ├── context/               # Curated Kumo knowledge (loaded on demand)
 │   ├── platform/          # SDK, RFM, PQL, graph, connectors
 │   ├── guides/            # Decision guides (RFM vs training, interpreting results)

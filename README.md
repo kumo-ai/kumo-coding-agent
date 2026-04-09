@@ -2,7 +2,7 @@
 
 A self-contained, portable collection of context and skills that extends any LLM with deep knowledge of the Kumo ML platform. Everything the agent needs is inside this repository — no external files or repositories are required at runtime.
 
-Designed for Claude Code, Cursor, Codex, or any LLM tool that reads markdown.
+Works with Claude Code, Codex, Cursor, or any LLM tool that reads markdown.
 
 ## Use Cases
 
@@ -19,49 +19,65 @@ Designed for Claude Code, Cursor, Codex, or any LLM tool that reads markdown.
 
 ## Quick Start
 
-1. Clone this repo or run `/ds-agent-import` from any project
-2. The agent reads `CLAUDE.md` as its entry point and routing table
-3. Ask a question — the agent loads relevant context docs on demand
+### Claude Code
 
-For environment setup (uv, kumoai, credentials), see `context/platform/data-connectors.md` § Environment Setup.
+Clone the repo into your project, then add a reference to your project's `CLAUDE.md`:
 
-## Slash Commands
+```bash
+cd your-project
+git clone https://github.com/kumo-ai/DS-agent.git ds-agent
+echo 'Also read ds-agent/CLAUDE.md for Kumo data science agent capabilities.' >> CLAUDE.md
+```
 
-Three commands are available when working in this repo with Claude Code or Codex:
+### Codex
+
+Clone the repo into your project. Codex reads `AGENTS.md` which points to `CLAUDE.md`.
+
+```bash
+cd your-project
+git clone https://github.com/kumo-ai/DS-agent.git ds-agent
+```
+
+### Cursor
+
+Clone the repo into your project. Cursor reads `.cursor/rules/` which points to `CLAUDE.md`.
+
+```bash
+cd your-project
+git clone https://github.com/kumo-ai/DS-agent.git ds-agent
+```
+
+### Then
+
+Ask a question — the agent loads relevant context docs on demand.
+
+For environment setup (uv, kumoai, credentials), see `context/platform/data-connectors.md`.
+
+## Commands
+
+Two commands are available when working in this repo with Claude Code or Codex:
 
 | Command | Purpose |
 |---------|---------|
-| `/ds-agent-import` | Download DS-agent from GitHub into your project |
 | `/ds-agent-issue [description]` | Report a gap, bug, or feature request |
 | `/ds-agent-pr [description]` | Fix a skill/doc and open a PR |
 
-**No setup needed** in this repo:
-
-- Claude Code discovers `.claude/skills/`
-- Codex discovers `.agents/skills/`
+Requires `gh` CLI (`brew install gh && gh auth login`).
 
 To make commands available in **any project** on your machine:
 
 ```bash
-make install-slash-commands
+make install-slash-commands    # symlinks to ~/.claude/skills/ and ~/.agents/skills/
+make uninstall-slash-commands  # remove
 ```
-
-This symlinks the skills to both `~/.claude/skills/` and `~/.agents/skills/`
-so they work everywhere in Claude Code and Codex. Requires `gh` CLI
-(`brew install gh && gh auth login`).
-
-Before using `/ds-agent-issue` or `/ds-agent-pr`, make sure
-`gh auth status` succeeds in that shell session.
-
-To remove: `make uninstall-slash-commands`
-
-For Codex usage details, see [.claude/skills/slash-commands.md](.claude/skills/slash-commands.md).
 
 ## Directory Structure
 
 ```
 DS-agent/
 ├── CLAUDE.md              # Entry point: routing table + hard rules
+├── AGENTS.md              # Codex entry point (points to CLAUDE.md)
+├── .cursor/rules/         # Cursor entry point (points to CLAUDE.md)
 ├── context/               # Curated knowledge (loaded on demand)
 │   ├── platform/          # SDK, RFM, PQL, graph, connectors (6 docs)
 │   ├── guides/            # Decision guides: RFM vs training, interpreting results

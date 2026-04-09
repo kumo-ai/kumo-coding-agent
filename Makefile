@@ -1,6 +1,6 @@
 CLAUDE_SKILLS_DIR := $(HOME)/.claude/skills
 CODEX_SKILLS_DIR := $(HOME)/.agents/skills
-SKILL_NAMES := ds-agent-import ds-agent-issue ds-agent-pr
+SKILL_NAMES := ds-agent-issue ds-agent-pr
 CLAUDE_REPO_SKILLS := $(CURDIR)/.claude/skills
 CODEX_REPO_SKILLS := $(CURDIR)/.agents/skills
 

@@ -1,24 +1,11 @@
-# DS-agent Slash Commands
+# DS-agent Commands
 
-Three commands for working with the DS-agent. Available automatically
+Two commands for working with the DS-agent. Available automatically
 when you open DS-agent in Claude Code or Codex — no setup needed.
 
 ---
 
 ## Commands
-
-### `/ds-agent-import`
-
-Download DS-agent from GitHub into your current project.
-
-```
-/ds-agent-import
-```
-
-What it does:
-- Downloads `ds-agent/` from GitHub (no local clone needed)
-- Adds a reference to your project's `CLAUDE.md`
-- Adds `ds-agent/scratch/` to `.gitignore`
 
 ### `/ds-agent-issue [description]`
 
@@ -50,10 +37,10 @@ If no description is given, you'll be asked interactively (Claude Code only).
 
 ### In DS-agent (no setup needed)
 
-The same three commands are exposed to both tools from this repo:
+Commands are exposed to both tools from this repo:
 
 - **Claude Code** auto-discovers `.claude/skills/`
-- **Codex** auto-discovers `.agents/skills/` (mirrored to the same skill definitions)
+- **Codex** auto-discovers `.agents/skills/`
 
 ### In other repos (global install)
 
@@ -68,11 +55,9 @@ This installs symlinks for:
 - `~/.claude/skills/` for Claude Code
 - `~/.agents/skills/` for Codex
 
-If you prefer manual setup, symlink the same skill folders into those directories.
-
 ### GitHub CLI (`gh`)
 
-Required for all three commands.
+Required for both commands.
 
 ```bash
 brew install gh          # macOS
@@ -88,9 +73,6 @@ gh auth status           # verify
 ## Codex
 
 Codex discovers these commands from `.agents/skills/`, not `.claude/skills/`.
-
-In the Codex app, enabled skills can appear in the slash-command picker. In
-CLI/IDE flows, the same skills can still be invoked directly.
 
 **Key difference:** Codex runs headless — no interactive prompts. Always
 provide arguments:
