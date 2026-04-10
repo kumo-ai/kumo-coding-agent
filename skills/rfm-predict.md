@@ -7,6 +7,7 @@ Run instant predictions on relational data using KumoRFM — no model training r
 ## Prerequisites
 
 - `kumoai>=2.16.3` installed (`uv add kumoai` — see `context/platform/data-connectors.md` for full setup)
+- For notebooks: `pip install --upgrade jupyter ipywidgets` (needed for progress bars and rich output)
 - API key set: `export KUMO_RFM_API_KEY=...` or pass to `rfm.init()`
 - Data accessible: local DataFrames, Snowflake connection, or Snowflake
   Semantic View
