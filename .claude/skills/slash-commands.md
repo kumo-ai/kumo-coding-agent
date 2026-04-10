@@ -1,45 +1,45 @@
-# DS-agent Slash Commands
+# kumo-coding-agent Slash Commands
 
-Three commands for working with the DS-agent. Available automatically
-when you open DS-agent in Claude Code or Codex — no setup needed.
+Three commands for working with the kumo-coding-agent. Available automatically
+when you open kumo-coding-agent in Claude Code or Codex — no setup needed.
 
 ---
 
 ## Commands
 
-### `/ds-agent-import`
+### `/kumo-import`
 
-Download DS-agent from GitHub into your current project.
+Download kumo-coding-agent from GitHub into your current project.
 
 ```
-/ds-agent-import
+/kumo-import
 ```
 
 What it does:
-- Downloads `ds-agent/` from GitHub (no local clone needed)
+- Downloads `kumo-coding-agent/` from GitHub (no local clone needed)
 - Adds a reference to your project's `CLAUDE.md`
-- Adds `ds-agent/scratch/` to `.gitignore`
+- Adds `kumo-coding-agent/scratch/` to `.gitignore`
 
-### `/ds-agent-issue [description]`
+### `/kumo-issue [description]`
 
 Report a gap, bug, or feature request.
 
 ```
-/ds-agent-issue agent didn't know about Databricks Unity Catalog connector options
-/ds-agent-issue pql-syntax.md says MODE is a valid aggregation but it isn't
-/ds-agent-issue
+/kumo-issue agent didn't know about Databricks Unity Catalog connector options
+/kumo-issue pql-syntax.md says MODE is a valid aggregation but it isn't
+/kumo-issue
 ```
 
 If no description is given, you'll be asked interactively (Claude Code only).
 
-### `/ds-agent-pr [description]`
+### `/kumo-pr [description]`
 
 Fix a skill or doc and open a PR.
 
 ```
-/ds-agent-pr add Databricks connector details to data-connectors.md
-/ds-agent-pr fix the time unit list in pql-syntax.md
-/ds-agent-pr
+/kumo-pr add Databricks connector details to data-connectors.md
+/kumo-pr fix the time unit list in pql-syntax.md
+/kumo-pr
 ```
 
 If no description is given, you'll be asked interactively (Claude Code only).
@@ -48,7 +48,7 @@ If no description is given, you'll be asked interactively (Claude Code only).
 
 ## Setup
 
-### In DS-agent (no setup needed)
+### In kumo-coding-agent (no setup needed)
 
 The same three commands are exposed to both tools from this repo:
 
@@ -80,7 +80,7 @@ gh auth login            # authenticate with GitHub
 gh auth status           # verify
 ```
 
-`/ds-agent-issue` and `/ds-agent-pr` should only be used after
+`/kumo-issue` and `/kumo-pr` should only be used after
 `gh auth status` succeeds in the current environment.
 
 ---
@@ -97,10 +97,10 @@ provide arguments:
 
 ```
 # Claude Code (interactive OK)
-/ds-agent-issue
+/kumo-issue
 
 # Codex (provide description upfront)
-/ds-agent-issue agent couldn't answer questions about Snowflake UDFs
+/kumo-issue agent couldn't answer questions about Snowflake UDFs
 ```
 
 Ensure `gh` is authenticated in the Codex environment.

@@ -1,10 +1,10 @@
-# DS-agent Usage Guide
+# Kumo Coding Agent — Usage Guide
 
 Get Kumo data science superpowers in any LLM-powered coding tool.
 
 ---
 
-## What Is DS-agent?
+## What Is It?
 
 A portable collection of markdown files that teaches your LLM tool how to use the Kumo ML platform — writing PQL queries, running predictions, building graphs, and more. No packages to install, no build step.
 
@@ -16,51 +16,61 @@ A portable collection of markdown files that teaches your LLM tool how to use th
 
 | Tool | Install | Required for |
 |------|---------|--------------|
-| **GitHub CLI** | `brew install gh && gh auth login` | Slash commands (`/ds-agent-import`, `/ds-agent-issue`, `/ds-agent-pr`) |
-| **kumoai** | `pip install kumoai` | Running predictions (not the agent itself) |
+| **GitHub CLI** | `brew install gh && gh auth login` | `/kumo-issue` and `/kumo-pr` commands |
+| **kumoai** | `pip install kumoai` | Running predictions |
 
-### Claude Code
+### Add to your project
 
-Clone the repo into your project, or use `/ds-agent-import` if slash commands
-are installed globally. Claude Code reads `CLAUDE.md` as the entry point and
-auto-discovers slash commands from `.claude/skills/`.
+**Using git submodule (recommended — supports updates):**
 
 ```bash
-git clone https://github.com/kumo-ai/DS-agent.git ds-agent
-# Or from within Claude Code: /ds-agent-import
+cd your-project
+git submodule add https://github.com/kumo-ai/kumo-coding-agent.git kumo-coding-agent
 ```
 
-### Codex
-
-Clone the repo into your project. Codex reads `CLAUDE.md` and auto-discovers
-slash commands from `.agents/skills/`. Always provide arguments inline —
-Codex runs headless with no interactive prompts.
+**Or clone directly:**
 
 ```bash
-git clone https://github.com/kumo-ai/DS-agent.git ds-agent
+cd your-project
+git clone https://github.com/kumo-ai/kumo-coding-agent.git kumo-coding-agent
 ```
 
-### Cursor
+### Tool-specific setup
 
-Clone the repo into your project. Cursor reads `CLAUDE.md` and all context
-docs and skills work. Slash commands are not available in Cursor — use the
-manual clone.
+**Claude Code** — add a reference to your project's `CLAUDE.md`:
 
 ```bash
-git clone https://github.com/kumo-ai/DS-agent.git ds-agent
+echo 'Also read kumo-coding-agent/CLAUDE.md for Kumo agent capabilities.' >> CLAUDE.md
 ```
 
-### Global slash commands (optional)
+**Codex** — reads `AGENTS.md` automatically. No extra setup needed.
 
-To make `/ds-agent-import`, `/ds-agent-issue`, and `/ds-agent-pr` available
-from **any** project (Claude Code and Codex only):
+**Cursor** — reads `.cursor/rules/` automatically. No extra setup needed.
+
+### Install slash commands (optional)
+
+For `/kumo-issue` and `/kumo-pr` in Claude Code and Cursor:
 
 ```bash
-# From the DS-agent repo
-make install-slash-commands
+npx skills add kumo-ai/kumo-coding-agent --all
+```
 
-# To remove later
-make uninstall-slash-commands
+For Codex, use `$skill-installer` inside a Codex session:
+
+```
+$skill-installer install https://github.com/kumo-ai/kumo-coding-agent
+```
+
+---
+
+## Updating
+
+```bash
+# Git submodule:
+git submodule update --remote kumo-coding-agent
+
+# Git clone:
+cd kumo-coding-agent && git pull
 ```
 
 ---
@@ -80,61 +90,26 @@ The agent reads `CLAUDE.md` as its routing table, then loads only the relevant c
 
 ---
 
-## Slash Commands
+## Commands
 
-Three commands are available in Claude Code and Codex:
+Two commands for reporting issues and contributing fixes:
 
-### `/ds-agent-import`
+### `/kumo-issue [description]`
 
-Downloads DS-agent from GitHub into your current project.
-
-```
-/ds-agent-import
-```
-
-- Downloads `ds-agent/` from `kumo-ai/DS-agent@main`
-- Adds a reference to your project's `CLAUDE.md`
-- Adds scratch files to `.gitignore`
-- No local clone of DS-agent needed
-
-### `/ds-agent-issue [description]`
-
-Reports a gap, bug, or feature request as a GitHub issue on `kumo-ai/DS-agent`.
+Reports a gap, bug, or feature request as a GitHub issue on `kumo-ai/kumo-coding-agent`.
 
 ```
-/ds-agent-issue agent didn't know about Databricks Unity Catalog options
-/ds-agent-issue pql-syntax.md says MODE is a valid aggregation but it isn't
-/ds-agent-issue add a healthcare vertical
+/kumo-issue agent didn't know about Databricks Unity Catalog options
+/kumo-issue pql-syntax.md says MODE is a valid aggregation but it isn't
 ```
 
-Omit the description in Claude Code to be prompted interactively. In Codex (headless), always provide it inline.
+### `/kumo-pr [description]`
 
-### `/ds-agent-pr [description]`
-
-Fixes a skill or context doc and opens a pull request on `kumo-ai/DS-agent`.
+Fixes a skill or context doc and opens a pull request.
 
 ```
-/ds-agent-pr add Databricks connector details to data-connectors.md
-/ds-agent-pr fix the time unit list in pql-syntax.md
-```
-
-Creates a branch, makes the edit, runs verification checks, and opens the PR — all in one command. Omit the description in Claude Code to be prompted interactively.
-
----
-
-## What's Inside
-
-```
-ds-agent/
-├── CLAUDE.md              # Entry point and routing table
-├── context/               # Curated Kumo knowledge (loaded on demand)
-│   ├── platform/          # SDK, RFM, PQL, graph, connectors
-│   ├── guides/            # Decision guides (RFM vs training, interpreting results)
-│   ├── patterns/          # Business workflow patterns (SQL + PQL)
-│   └── verticals/         # Industry-specific guides (fraud, demand forecasting)
-├── skills/                # Step-by-step workflows
-├── meta/                  # Self-improvement: add docs, sync from upstream, verify
-└── scratch/               # Session state for experiments (gitignored)
+/kumo-pr add Databricks connector details to data-connectors.md
+/kumo-pr fix the time unit list in pql-syntax.md
 ```
 
 ---

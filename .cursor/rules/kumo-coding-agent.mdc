@@ -1,0 +1,7 @@
+---
+description: Kumo Coding Agent — ML predictions on relational data using KumoRFM
+alwaysApply: true
+---
+
+Read CLAUDE.md in this repository for the full routing table, hard rules,
+and workflow skills. It is the entry point for the Kumo Coding Agent.

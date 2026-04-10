@@ -1,6 +1,6 @@
 # Sync from kumo-sdk
 
-Update DS-agent context docs when a new version of the `kumoai` package is
+Update kumo-coding-agent context docs when a new version of the `kumoai` package is
 released. Covers RFM API, Enterprise SDK, graph construction, and connectors.
 
 ---
@@ -186,7 +186,7 @@ expected answers.
 
 ```bash
 git add context/ skills/ eval/
-git commit -m "sync DS-agent from kumo-sdk v<target_version>
+git commit -m "sync kumo-coding-agent from kumo-sdk v<target_version>
 
 Updated: <list of updated docs>
 Changes: <brief summary of material changes>"
