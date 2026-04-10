@@ -60,13 +60,10 @@ The same three commands are exposed to both tools from this repo:
 Run:
 
 ```bash
-make install-slash-commands
+npx skills add kumo-ai/kumo-coding-agent --all
 ```
 
-This installs symlinks for:
-
-- `~/.claude/skills/` for Claude Code
-- `~/.agents/skills/` for Codex
+This installs the commands for all supported tools.
 
 If you prefer manual setup, symlink the same skill folders into those directories.
 

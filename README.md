@@ -1,6 +1,8 @@
 # Kumo Coding Agent
 
-A portable collection of context and skills that extends any LLM coding tool with deep knowledge of the Kumo ML platform. Works with Claude Code, Codex, Cursor, and any tool that reads markdown.
+A portable collection of context and skills that extends any LLM coding tool with deep knowledge of the Kumo ML platform.
+
+Works with **Claude Code**, **Codex**, **Cursor**, and any tool that reads markdown.
 
 ---
 
@@ -13,7 +15,7 @@ A portable collection of context and skills that extends any LLM coding tool wit
 
 ---
 
-### Claude Code
+### <img src="https://anthropic.gallerycdn.vsassets.io/extensions/anthropic/claude-code/2.1.98/1775762394471/Microsoft.VisualStudio.Services.Icons.Default" width="24" height="24" align="top"> Claude Code
 
 **1. Add the agent to your project:**
 
@@ -44,7 +46,7 @@ This installs `/kumo-issue` and `/kumo-pr` for reporting bugs and contributing f
 
 ---
 
-### Codex
+### <img src="https://raw.githubusercontent.com/lobehub/lobe-icons/refs/heads/master/packages/static-png/dark/codex.png" width="24" height="24" align="top"> Codex
 
 **1. Add the agent to your project:**
 
@@ -65,7 +67,7 @@ $skill-installer install https://github.com/kumo-ai/kumo-coding-agent
 
 ---
 
-### Cursor
+### <img src="https://img.icons8.com/color/512/cursor-ai.png" width="24" height="24" align="top"> Cursor
 
 **1. Add the agent to your project:**
 
@@ -110,9 +112,9 @@ If you used `git clone` instead of submodule:
 cd kumo-coding-agent && git pull
 ```
 
-**Note for teammates:** Git submodules are stored as references, not files.
-When a teammate clones your project, the `kumo-coding-agent/` folder will
-be empty unless they include `--recurse-submodules`:
+**For cloning projects containing `kumo-coding-agent`:** Git submodules are
+stored as references, not files. The `kumo-coding-agent/` folder will be
+empty unless you include `--recurse-submodules`:
 
 ```bash
 # When cloning for the first time:
@@ -191,3 +193,10 @@ kumo-coding-agent/
 - **Version-tracked**: Every doc traces to a specific package version
 - **Self-correcting**: Gap manifest + verify-content catch drift
 - **Testable**: Eval questions verify knowledge quality
+
+---
+
+<p align="center">
+  Developed by <a href="https://kumo.ai">Kumo AI</a><br>
+  &copy; 2026 Kumo AI, Inc. All rights reserved.
+</p>
