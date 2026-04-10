@@ -1,6 +1,6 @@
 # Sync Context from Source Repos
 
-Orchestrate syncing DS-agent context docs from upstream source repositories.
+Orchestrate syncing kumo-coding-agent context docs from upstream source repositories.
 Delegates to per-repo sub-skills for the actual work.
 
 ---

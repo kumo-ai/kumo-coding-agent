@@ -1,6 +1,6 @@
 # Sync from kumo-api
 
-Update DS-agent docs when a new version of the `kumoapi` package is released.
+Update kumo-coding-agent docs when a new version of the `kumoapi` package is released.
 Covers shared data models: RunMode, TimeUnit, ModelPlan sub-plans, loss configs,
 and job result types.
 
@@ -127,7 +127,7 @@ Compare against `platform/sdk-overview.md` Training Diagnostics section.
 
 ### Step 6: Cross-Repo Grep
 
-**This is the critical step.** Search the ENTIRE DS-agent tree for
+**This is the critical step.** Search the ENTIRE kumo-coding-agent tree for
 references to enum values that may have changed:
 
 ```bash
@@ -203,7 +203,7 @@ If RunMode values changed, update relevant expected answers.
 
 ```bash
 git add context/ skills/ eval/ meta/
-git commit -m "sync DS-agent from kumo-api v<target_version>
+git commit -m "sync kumo-coding-agent from kumo-api v<target_version>
 
 Updated: <list of updated docs>
 Changes: <summary — e.g., 'new QuantileLossConfig, RunMode.TURBO added'>"

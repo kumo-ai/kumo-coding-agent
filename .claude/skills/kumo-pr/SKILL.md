@@ -1,13 +1,13 @@
 ---
-name: ds-agent-pr
-description: Create a branch, fix a DS-agent skill or context doc, and open a pull request on kumo-ai/DS-agent. Use when someone says "fix the agent docs", "update a skill", "contribute a fix", "open a PR for ds-agent", or "improve the agent".
+name: kumo-pr
+description: Create a branch, fix a kumo-coding-agent skill or context doc, and open a pull request on kumo-ai/kumo-coding-agent. Use when someone says "fix the agent docs", "update a skill", "contribute a fix", "open a PR for kumo-coding-agent", or "improve the agent".
 argument-hint: "[description of what to fix]"
 allowed-tools: [Bash, Read, Write, Edit, Glob, Grep]
 ---
 
-# Fix DS-agent and Open a PR
+# Fix kumo-coding-agent and Open a PR
 
-Create a branch, apply fixes to DS-agent skills or context docs, and
+Create a branch, apply fixes to kumo-coding-agent skills or context docs, and
 open a pull request for review.
 
 **This command works in both Claude Code (interactive) and Codex (headless).**
@@ -42,27 +42,27 @@ If `$ARGUMENTS` is empty, ask the user (skip in headless mode):
 Generate `<slug>` from the fix description: lowercase, hyphens, max 50 chars.
 Examples: `fix-pql-time-units`, `add-databricks-connector-docs`, `update-fraud-vertical`.
 
-**Check whether we're already inside the DS-agent repo:**
+**Check whether we're already inside the kumo-coding-agent repo:**
 
 ```bash
-git remote get-url origin 2>/dev/null | grep -q "DS-agent"
+git remote get-url origin 2>/dev/null | grep -q "kumo-coding-agent"
 ```
 
 **If YES** (already in the right repo):
 ```bash
 git checkout main
 git pull --ff-only origin main 2>/dev/null || true
-git checkout -b ds-agent/<slug>
+git checkout -b kumo-coding-agent/<slug>
 # WORK_DIR = current directory
 ```
 
-**If NO** (e.g., running from a project that used ds-agent-import):
+**If NO** (e.g., running from a project that used kumo-import):
 ```bash
 WORK_DIR=$(mktemp -d)
 git clone --filter=blob:none --depth=1 \
-  git@github.com:kumo-ai/DS-agent.git "$WORK_DIR"
+  git@github.com:kumo-ai/kumo-coding-agent.git "$WORK_DIR"
 cd "$WORK_DIR"
-git checkout -b ds-agent/<slug>
+git checkout -b kumo-coding-agent/<slug>
 ```
 
 All subsequent steps operate inside `$WORK_DIR`. Remember it for cleanup.
@@ -117,7 +117,7 @@ Where `<type>` is one of: `fix`, `docs`, `feat`, `refactor`.
 ### Step 7: Push and Create PR
 
 ```bash
-git push -u origin ds-agent/<slug>
+git push -u origin kumo-coding-agent/<slug>
 ```
 
 Create the PR — always pass `--head` and `--base` explicitly so this works
@@ -125,8 +125,8 @@ regardless of which directory the command runs from:
 
 ```bash
 gh pr create \
-  --repo kumo-ai/DS-agent \
-  --head ds-agent/<slug> \
+  --repo kumo-ai/kumo-coding-agent \
+  --head kumo-coding-agent/<slug> \
   --base main \
   --title "<concise title>" \
   --body "$(cat <<'EOF'
@@ -145,7 +145,7 @@ gh pr create \
 - [ ] Content verified against source (if applicable)
 
 ---
-*Created via `/ds-agent-pr` by @AUTHOR*
+*Created via `/kumo-pr` by @AUTHOR*
 EOF
 )"
 ```

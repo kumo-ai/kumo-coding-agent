@@ -1,6 +1,6 @@
 CLAUDE_SKILLS_DIR := $(HOME)/.claude/skills
 CODEX_SKILLS_DIR := $(HOME)/.agents/skills
-SKILL_NAMES := ds-agent-import ds-agent-issue ds-agent-pr
+SKILL_NAMES := kumo-import kumo-issue kumo-pr
 CLAUDE_REPO_SKILLS := $(CURDIR)/.claude/skills
 CODEX_REPO_SKILLS := $(CURDIR)/.agents/skills
 
@@ -31,9 +31,9 @@ install-claude-slash-commands:
 	)
 	@echo ""
 	@echo "Claude Code commands available in any new session:"
-	@echo "  /ds-agent-import   Copy DS-agent into a project"
-	@echo "  /ds-agent-issue    File a bug or feature request"
-	@echo "  /ds-agent-pr       Fix a doc and open a PR"
+	@echo "  /kumo-import   Copy kumo-coding-agent into a project"
+	@echo "  /kumo-issue    File a bug or feature request"
+	@echo "  /kumo-pr       Fix a doc and open a PR"
 
 install-codex-slash-commands:
 	@mkdir -p $(CODEX_SKILLS_DIR)
@@ -50,9 +50,9 @@ install-codex-slash-commands:
 	)
 	@echo ""
 	@echo "Codex skills available in any new session:"
-	@echo "  /ds-agent-import   Copy DS-agent into a project"
-	@echo "  /ds-agent-issue    File a bug or feature request"
-	@echo "  /ds-agent-pr       Fix a doc and open a PR"
+	@echo "  /kumo-import   Copy kumo-coding-agent into a project"
+	@echo "  /kumo-issue    File a bug or feature request"
+	@echo "  /kumo-pr       Fix a doc and open a PR"
 
 uninstall-slash-commands: uninstall-claude-slash-commands uninstall-codex-slash-commands
 	@echo ""

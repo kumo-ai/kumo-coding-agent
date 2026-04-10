@@ -1,130 +1,193 @@
-# Kumo Data Science Agent
+# Kumo Coding Agent
 
-A self-contained, portable collection of context and skills that extends any LLM with deep knowledge of the Kumo ML platform. Everything the agent needs is inside this repository — no external files or repositories are required at runtime.
+A portable collection of context and skills that extends any LLM coding tool with deep knowledge of the Kumo ML platform. Works with Claude Code, Codex, Cursor, and any tool that reads markdown.
 
-Designed for Claude Code, Cursor, Codex, or any LLM tool that reads markdown.
+---
 
-## Use Cases
+## Setup
 
-| What You Want to Do | Start Here |
-|---------------------|------------|
-| Build a prediction model end-to-end | `skills/scope-prediction-task.md` then follow the chain |
+### Prerequisites
+
+- **kumoai**: `pip install kumoai` (needed for running predictions, not for the agent itself)
+- **GitHub CLI**: `brew install gh && gh auth login` (needed only for `/kumo-issue` and `/kumo-pr` commands)
+
+---
+
+### Claude Code
+
+**1. Add the agent to your project:**
+
+```bash
+cd your-project
+git submodule add https://github.com/kumo-ai/kumo-coding-agent.git kumo-coding-agent
+```
+
+**2. Tell Claude Code to read the agent:**
+
+```bash
+echo 'Also read kumo-coding-agent/CLAUDE.md for Kumo agent capabilities.' >> CLAUDE.md
+```
+
+**3. Install slash commands (optional):**
+
+```bash
+npx skills add kumo-ai/kumo-coding-agent --all
+```
+
+This installs `/kumo-issue` and `/kumo-pr` for reporting bugs and contributing fixes.
+
+**4. Start using it.** Ask questions in natural language:
+
+```
+"Predict which customers will churn in the next 30 days by running RFM on the SALT dataset"
+```
+
+---
+
+### Codex
+
+**1. Add the agent to your project:**
+
+```bash
+cd your-project
+git submodule add https://github.com/kumo-ai/kumo-coding-agent.git kumo-coding-agent
+```
+
+**2. No extra setup needed.** Codex reads `AGENTS.md` automatically.
+
+**3. Install slash commands (optional).** Inside a Codex session:
+
+```
+$skill-installer install https://github.com/kumo-ai/kumo-coding-agent
+```
+
+**4. Start using it.** Ask questions in natural language.
+
+---
+
+### Cursor
+
+**1. Add the agent to your project:**
+
+```bash
+cd your-project
+git submodule add https://github.com/kumo-ai/kumo-coding-agent.git kumo-coding-agent
+```
+
+**2. No extra setup needed.** Cursor reads `.cursor/rules/` automatically.
+
+**3. Install slash commands (optional):**
+
+```bash
+npx skills add kumo-ai/kumo-coding-agent --all
+```
+
+**4. Start using it.** Ask questions in natural language.
+
+---
+
+### Other tools
+
+Clone the repo into your project. Any LLM tool that reads markdown can use `CLAUDE.md` as the entry point.
+
+```bash
+git clone https://github.com/kumo-ai/kumo-coding-agent.git kumo-coding-agent
+```
+
+---
+
+## Updating
+
+To pull the latest version of the agent:
+
+```bash
+git submodule update --remote kumo-coding-agent
+```
+
+If you used `git clone` instead of submodule:
+
+```bash
+cd kumo-coding-agent && git pull
+```
+
+**Note for teammates:** Git submodules are stored as references, not files.
+When a teammate clones your project, the `kumo-coding-agent/` folder will
+be empty unless they include `--recurse-submodules`:
+
+```bash
+# When cloning for the first time:
+git clone --recurse-submodules <your-project-repo>
+
+# If already cloned and the folder is empty:
+git submodule init && git submodule update
+```
+
+---
+
+## What Can It Do?
+
+| Task | Start Here |
+|------|------------|
+| Build a prediction model end-to-end | `skills/scope-prediction-task.md` |
 | Get instant predictions (no training) | `skills/rfm-predict.md` |
 | Write or fix a PQL query | `skills/write-pql.md` |
 | Train a high-accuracy model | `skills/train-model.md` |
 | Debug a failed prediction | `skills/debug-prediction.md` |
 | Improve weak model performance | `skills/iterate-model.md` |
 | Design a SQL+PQL business workflow | `context/patterns/prediction-patterns.md` |
-| Decide between RFM and Training | `context/guides/rfm-vs-training.md` |
+| Decide between RFM and training | `context/guides/rfm-vs-training.md` |
 
-## Quick Start
+---
 
-1. Clone this repo or run `/ds-agent-import` from any project
-2. The agent reads `CLAUDE.md` as its entry point and routing table
-3. Ask a question — the agent loads relevant context docs on demand
+## Commands
 
-For environment setup (uv, kumoai, credentials), see `context/platform/data-connectors.md` § Environment Setup.
+Two commands are available for reporting issues and contributing fixes.
+Requires GitHub CLI (`gh auth status` must pass).
 
-## Slash Commands
+| Command | What it does |
+|---------|-------------|
+| `/kumo-issue [description]` | Files a GitHub issue on this repo |
+| `/kumo-pr [description]` | Creates a branch, fixes a doc, and opens a PR |
 
-Three commands are available when working in this repo with Claude Code or Codex:
-
-| Command | Purpose |
-|---------|---------|
-| `/ds-agent-import` | Download DS-agent from GitHub into your project |
-| `/ds-agent-issue [description]` | Report a gap, bug, or feature request |
-| `/ds-agent-pr [description]` | Fix a skill/doc and open a PR |
-
-**No setup needed** in this repo:
-
-- Claude Code discovers `.claude/skills/`
-- Codex discovers `.agents/skills/`
-
-To make commands available in **any project** on your machine:
-
-```bash
-make install-slash-commands
-```
-
-This symlinks the skills to both `~/.claude/skills/` and `~/.agents/skills/`
-so they work everywhere in Claude Code and Codex. Requires `gh` CLI
-(`brew install gh && gh auth login`).
-
-Before using `/ds-agent-issue` or `/ds-agent-pr`, make sure
-`gh auth status` succeeds in that shell session.
-
-To remove: `make uninstall-slash-commands`
-
-For Codex usage details, see [.claude/skills/slash-commands.md](.claude/skills/slash-commands.md).
+---
 
 ## Directory Structure
 
 ```
-DS-agent/
-├── CLAUDE.md              # Entry point: routing table + hard rules
-├── context/               # Curated knowledge (loaded on demand)
-│   ├── platform/          # SDK, RFM, PQL, graph, connectors (6 docs)
-│   ├── guides/            # Decision guides: RFM vs training, interpreting results
-│   ├── patterns/          # Business workflow patterns (SQL+PQL)
-│   ├── _sources.yaml      # Provenance: what version each doc was synced from
-│   └── _gaps.yaml         # Known gaps: missing docs + platform limitations
-├── skills/                # Step-by-step workflows (8 skills)
-├── meta/                  # Self-improvement infrastructure
-│   ├── skills/            # How to add, sync, verify, and audit knowledge
-│   │   └── sync/          # Per-repo sync sub-skills (kumo-sdk, kumo-pql, kumo-api)
-│   └── templates/         # Templates for new docs and skills
-├── scratch/               # Session state for long-running experiments (gitignored)
-└── eval/                  # Test questions to verify agent quality
+kumo-coding-agent/
+├── CLAUDE.md              # Entry point for Claude Code
+├── AGENTS.md              # Entry point for Codex (points to CLAUDE.md)
+├── .cursor/rules/         # Entry point for Cursor (points to CLAUDE.md)
+├── context/               # Curated Kumo knowledge (loaded on demand)
+│   ├── platform/          # SDK, RFM, PQL, graph, connectors
+│   ├── guides/            # Decision guides
+│   ├── patterns/          # Business workflow patterns
+│   └── verticals/         # Industry-specific guides
+├── skills/                # Step-by-step workflows
+├── meta/                  # Add docs, sync from upstream, verify
+├── scratch/               # Session state (gitignored)
+└── eval/                  # Test questions for agent quality
 ```
+
+---
 
 ## Extending the Agent
 
-### Add knowledge or skills
-
 | Action | Instructions |
 |--------|-------------|
-| Add a context document | `meta/skills/add-context-doc.md` — copy template, write 200-400 lines, add to `_sources.yaml` and routing table, add eval questions |
-| Add a workflow skill | `meta/skills/add-skill.md` — copy template, write workflow, add to routing table |
+| Add a context document | `meta/skills/add-context-doc.md` |
+| Add a workflow skill | `meta/skills/add-skill.md` |
+| Sync from upstream repos | `meta/skills/sync-from-source.md` |
+| Check doc freshness | `meta/skills/validate-freshness.md` |
+| Verify claims against code | `meta/skills/verify-content.md` |
+| Audit known gaps | `meta/skills/check-gaps.md` |
 
-### Sync from upstream repos
-
-When a new version of `kumoai`, `kumopql`, or `kumoapi` is released:
-
-| Approach | How |
-|----------|-----|
-| Sync one repo | Run the sub-skill directly: `meta/skills/sync/sync-kumo-sdk.md`, `sync-kumo-pql.md`, or `sync-kumo-api.md` with a `target_version` |
-| Full sync | Run `meta/skills/sync-from-source.md` — orchestrates all three in dependency order (api → pql → sdk) |
-| Automated | `.github/workflows/sync-context.yml` — triggered by `workflow_dispatch` or `repository_dispatch` from upstream CI |
-
-Current versions tracked in `context/_sources.yaml` under `_repo_versions`.
-
-### Check freshness and correctness
-
-| Action | Instructions |
-|--------|-------------|
-| Which docs are stale? | `meta/skills/validate-freshness.md` — compares doc versions against latest PyPI releases |
-| Do docs match source code? | `meta/skills/verify-content.md` — cross-checks every factual claim against authoritative source |
-
-### Report a gap
-
-If you discover something wrong, missing, or unsupported:
-
-1. Check `context/_gaps.yaml` — is it already tracked?
-2. If not, add an entry following the format in that file (type: `documentation` for features that exist but aren't documented, `platform` for features that don't exist)
-3. Run `meta/skills/check-gaps.md` to audit the full manifest and detect which gaps are now resolvable
-
-Gaps are checked automatically during every sync and verify-content run.
-
-## Testing the Agent
-
-The `eval/` directory contains question banks that test whether the agent answers correctly. See `eval/README.md` for details.
-
-After any content change, run the relevant eval to verify no regression.
+---
 
 ## Design Principles
 
-- **Portable**: Plain markdown + YAML, works with any LLM tool
-- **On-demand loading**: `CLAUDE.md` is small; context loaded only when needed
-- **Version-tracked**: Every doc traces to a specific package version via `_sources.yaml`
-- **Self-correcting**: Gap manifest + verify-content catch drift between docs and code
+- **Portable**: Plain markdown, works with any LLM tool
+- **On-demand loading**: Only loads what the task needs
+- **Version-tracked**: Every doc traces to a specific package version
+- **Self-correcting**: Gap manifest + verify-content catch drift
 - **Testable**: Eval questions verify knowledge quality
