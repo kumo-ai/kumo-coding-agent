@@ -212,9 +212,13 @@ graph["orders"].print_metadata()
    detected as `time` type, not `string`.
 4. **Links are semantically correct and complete** — a foreign key from
    `orders.user_id` to `users.user_id` means "each order belongs to one
-   user". **If the graph has no FK links, stop and fix it before
-   attempting predictions** — the query will fail with a multi-hop path
-   error. Use `graph.link()` to add missing FKs manually.
+   user". If the graph has no FK links but the data clearly has
+   relationships (e.g., columns with matching IDs across tables),
+   **stop and add them with `graph.link()` before predicting** — otherwise
+   the query will fail with a multi-hop path error. If the data genuinely
+   has no cross-table relationships (single table, or independent tables),
+   that's fine — predictions are limited to static tasks on a single
+   table (e.g., `PREDICT table.column FOR EACH table.pk`).
 5. **No duplicate or phantom tables** — schema imports can pick up views,
    staging tables, or system tables that do not belong in the graph.
 
