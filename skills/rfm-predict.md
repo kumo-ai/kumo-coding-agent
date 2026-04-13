@@ -8,7 +8,7 @@ Run instant predictions on relational data using KumoRFM — no model training r
 
 - `kumoai>=2.16.3` installed (`uv add kumoai` — see `context/platform/data-connectors.md` for full setup)
 - For notebooks: `pip install --upgrade jupyter ipywidgets` (needed for progress bars and rich output)
-- API key set: `export KUMO_RFM_API_KEY=...` or pass to `rfm.init()`
+- API key set: `export KUMO_API_KEY=...` or pass to `rfm.init()`
 - Data accessible: local DataFrames, Snowflake connection, or Snowflake
   Semantic View
 - **Read first**: `context/platform/rfm-overview.md`
@@ -30,7 +30,7 @@ print(f"kumoai version: {kumoai.__version__}")
 # Option A: Explicit API key
 rfm.init(api_key="your-api-key", url="https://kumorfm.ai/api")
 
-# Option B: Environment variable (KUMO_RFM_API_KEY)
+# Option B: Environment variable (KUMO_API_KEY)
 rfm.init(url="https://kumorfm.ai/api")
 
 # Option C: Colab — browser-based login (opens auth widget)
@@ -210,9 +210,11 @@ graph["orders"].print_metadata()
 3. **Time columns are correct** — temporal queries require a valid
    datetime/timestamp column on the target table. Confirm the column is
    detected as `time` type, not `string`.
-4. **Links are semantically correct** — a foreign key from `orders.user_id`
-   to `users.user_id` means "each order belongs to one user". If a link is
-   wrong or missing, fix it manually.
+4. **Links are semantically correct and complete** — a foreign key from
+   `orders.user_id` to `users.user_id` means "each order belongs to one
+   user". **If the graph has no FK links, stop and fix it before
+   attempting predictions** — the query will fail with a multi-hop path
+   error. Use `graph.link()` to add missing FKs manually.
 5. **No duplicate or phantom tables** — schema imports can pick up views,
    staging tables, or system tables that do not belong in the graph.
 
@@ -392,7 +394,7 @@ print(metrics_df)
 ```
 
 **Held-out evaluation** — if the dataset has a pre-defined test split, or
-you're comparing RFM to a baseline model (ARIMA, XGBoost, etc.), you **MUST**
+you're comparing RFM to a baseline model (ARIMA, XGBoost, AutoGluon, etc.), you **MUST**
 use held-out evaluation. `model.evaluate()` uses its own internal split,
 which produces metrics that can't be compared fairly to a baseline trained
 on a different split. Predict on the saved test entity IDs (from Step 1b)

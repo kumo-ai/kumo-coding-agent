@@ -1,4 +1,4 @@
-# Kumo SDK -- Enterprise ML Workflows
+# Kumo SDK -- Fine-tuned ML Workflows
 
 > Source: kumo-sdk (kumo-tune-skill) + kumoapi v0.74.0 API | Last synced: 2026-03-31
 

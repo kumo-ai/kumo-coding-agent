@@ -1,4 +1,4 @@
-# RFM Zero-Shot vs. Enterprise SDK Training
+# RFM Zero-Shot vs. Fine-tuned SDK Training
 
 > Source: Authored from first principles + Kumo platform knowledge | Last synced: 2026-03-30
 
@@ -6,7 +6,7 @@
 
 Read this document when you need to decide between two paths:
 - **RFM (zero-shot)**: Instant predictions using a pre-trained relational foundation model. No training step.
-- **Enterprise SDK (training)**: Train a GNN model on the user's specific data. Higher accuracy ceiling, higher cost.
+- **fine-tuned SDK (training)**: Train a GNN model on the user's specific data. Higher accuracy ceiling, higher cost.
 
 ---
 
@@ -24,17 +24,17 @@ Is the user exploring or prototyping?
         │   ├── NO → Stick with RFM (training won't help with tiny data)
         │   └── YES → Has Kumo API access + compute budget?
         │       ├── NO → Stick with RFM
-        │       └── YES → Train with Enterprise SDK
+        │       └── YES → Train with fine-tuned SDK
         └── Time to wait for training? (hours to days)
             ├── NO → Use RFM for now, train in background
-            └── YES → Train with Enterprise SDK
+            └── YES → Train with fine-tuned SDK
 ```
 
 ---
 
 ## Comparison
 
-| Dimension | RFM Zero-Shot | Enterprise SDK Training |
+| Dimension | RFM Zero-Shot | fine-tuned SDK Training |
 |-----------|---------------|------------------------|
 | **Setup time** | Minutes | Hours (first run), faster with templates |
 | **Prediction latency** | Seconds to minutes | Minutes (batch), ms (online endpoint) |
@@ -64,7 +64,7 @@ Is the user exploring or prototyping?
 - Online serving (real-time endpoint) is required
 - Custom feature engineering or text encoding is needed
 
-## When to Use Enterprise SDK Training
+## When to Use fine-tuned SDK Training
 
 - **Production models**: Accuracy matters and you have compute budget
 - **Sufficient data**: > 10K entities, > 100K events, > 6 months of history
@@ -102,7 +102,7 @@ poorly-defined task.
 
 ## Cost and Time Estimates
 
-| Operation | RFM | Enterprise SDK |
+| Operation | RFM | fine-tuned SDK |
 |-----------|-----|----------------|
 | Graph construction | 1–5 minutes | 5–15 minutes |
 | Prediction (10K entities) | 1–5 minutes | N/A (need training first) |
@@ -119,11 +119,11 @@ poorly-defined task.
 | User Says | Recommendation | Reasoning |
 |-----------|---------------|-----------|
 | "Just see if this is predictable" | RFM | Exploration — don't invest in training yet |
-| "I need this in production next week" | Enterprise SDK | Production needs trained model |
+| "I need this in production next week" | fine-tuned SDK | Production needs trained model |
 | "I have 500 rows of data" | RFM | Too small for training |
-| "Our current model gets 0.7 AUC, can we do better?" | Enterprise SDK | Incremental improvement needs custom training |
+| "Our current model gets 0.7 AUC, can we do better?" | fine-tuned SDK | Incremental improvement needs custom training |
 | "Run predictions for all 1M customers" | Either | RFM for speed, training for accuracy |
-| "I need real-time predictions" | Enterprise SDK | Online serving requires trained model |
+| "I need real-time predictions" | fine-tuned SDK | Online serving requires trained model |
 | "Which of these 5 tasks is most promising?" | RFM for all 5 | Screen tasks quickly before committing |
 
 ---

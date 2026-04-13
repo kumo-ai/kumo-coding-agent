@@ -138,7 +138,7 @@ source code — do not trust this table if it may be stale.
 **PQL Aggregations** (from `PQLGrammar.g4`):
 `SUM`, `AVG`, `MIN`, `MAX`, `COUNT`, `COUNT_DISTINCT`, `FIRST`, `LAST`, `LIST_DISTINCT`
 
-**RFM Supported Aggregations** (subset — rest are Enterprise only):
+**RFM Supported Aggregations** (subset — rest are fine-tuned only):
 `SUM`, `AVG`, `MIN`, `MAX`, `COUNT`, `LIST_DISTINCT`
 
 **PQL Comparison Operators** (from `PQLGrammar.g4`):

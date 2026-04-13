@@ -29,7 +29,7 @@ metrics_df = model.evaluate(query, run_mode="fast")
 print(metrics_df)
 ```
 
-**Enterprise SDK:**
+**fine-tuned SDK:**
 
 ```python
 # 3-way metrics (test, validation, training)
@@ -176,12 +176,12 @@ If task, data, and graph are all correct but metrics are still weak:
 | Current Approach | Try Instead | Expected Improvement |
 |------------------|-------------|---------------------|
 | RFM `run_mode="fast"` | RFM `run_mode="best"` | Small (1-5% AUC lift) |
-| RFM (any mode) | Enterprise SDK with `RunMode.FAST` | Moderate (5-15% AUC lift if enough data) |
+| RFM (any mode) | fine-tuned SDK with `RunMode.FAST` | Moderate (5-15% AUC lift if enough data) |
 | SDK `RunMode.FAST` | SDK `RunMode.NORMAL` | Small–moderate (2-8% AUC lift) |
 | SDK `RunMode.NORMAL` | SDK `RunMode.BEST` | Small (1-5% AUC lift) |
 | SDK default config | Tune hyperparameters | Variable (depends on what's wrong) |
 
-**Hyperparameter tuning** (Enterprise SDK only):
+**Hyperparameter tuning** (fine-tuned SDK only):
 
 ```python
 # More experiments (wider AutoML search)
@@ -231,7 +231,7 @@ result = trainer.fit(graph, train_table, warm_start_job_id="trainingjob-xxx")
 | Model capacity too small | `model_architecture.channels` | Use [256, 512] |
 | Text columns not contributing | `column_processing.encoder_overrides` | Add text encoder |
 
-**Note on explainability:** The Enterprise SDK has no built-in feature importance API. To understand what drives predictions:
+**Note on explainability:** The fine-tuned SDK has no built-in feature importance API. To understand what drives predictions:
 - Run RFM `explain=True` on the same query for feature attributions
 - Analyze `holdout_df()` manually — slice predictions by feature values to find drivers
 - Use `graph.get_table_stats(wait_for="full")` to check column distributions
@@ -274,8 +274,8 @@ Track your experiments in your scratch file:
 | 0 | Baseline (RFM, 30d window) | 0.58 | — | Weak signal |
 | 1 | Changed window to 90d | 0.62 | +0.04 | Moderate improvement |
 | 2 | Added PRODUCTS table to graph | 0.63 | +0.01 | Marginal |
-| 3 | Switched to Enterprise SDK FAST | 0.71 | +0.08 | Significant jump |
-| 4 | Enterprise SDK NORMAL | 0.74 | +0.03 | Good enough for production |
+| 3 | Switched to fine-tuned SDK FAST | 0.71 | +0.08 | Significant jump |
+| 4 | fine-tuned SDK NORMAL | 0.74 | +0.03 | Good enough for production |
 
 **Decision**: Use iteration #4 (SDK NORMAL, 90d window, with PRODUCTS table)
 ```
@@ -290,7 +290,7 @@ Track your experiments in your scratch file:
 | 2 | Different aggregation or threshold | 5 min | High — redefines the task |
 | 3 | Add/remove tables from graph | 10 min | Medium — adds or removes signal |
 | 4 | Fix wrong FK links | 10 min | Medium–High if link was wrong |
-| 5 | Switch RFM → Enterprise SDK | 1–4 hours | Medium (5-15% AUC lift) |
+| 5 | Switch RFM → fine-tuned SDK | 1–4 hours | Medium (5-15% AUC lift) |
 | 6 | Run SDK with NORMAL/BEST | +1–4 hours | Small–Medium |
 | 7 | Tune hyperparameters | 2–8 hours | Variable |
 | 8 | Collect more/better data | Days–weeks | High (if feasible) |

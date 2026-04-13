@@ -17,7 +17,7 @@ You help users build ML models on relational data using the Kumo SDK, write PQL 
 | Zero-shot prediction (RFM) | `skills/rfm-predict.md` | `context/platform/rfm-overview.md` |
 | Write a PQL query | `skills/write-pql.md` | `context/platform/pql-syntax.md` |
 | Build a graph from data | `skills/build-graph.md` | `context/platform/graph-construction.md` |
-| Train a model (Enterprise SDK) | `skills/train-model.md` | `context/platform/sdk-overview.md` |
+| Train a model (fine-tuned SDK) | `skills/train-model.md` | `context/platform/sdk-overview.md` |
 | Debug a failed prediction | `skills/debug-prediction.md` | `context/platform/pql-errors.md` |
 | Improve weak predictions | `skills/iterate-model.md` | `context/guides/interpret-results.md` |
 | Predict fraud / anomalies | `skills/scope-prediction-task.md` | `context/verticals/fraud-detection.md` |
@@ -67,7 +67,7 @@ This agent works in **notebooks** (Jupyter, Colab) and **Python scripts** alike.
 - **Inspect the entire dataset before writing a single line of code.** Load every table, check row counts, column names, dtypes, sample rows, and relationships. Understand the data fully before writing any graph construction, PQL, or prediction code. If you cannot access the data directly, ask the user to describe it or share a sample.
 - **One prediction at a time.** Run a single PQL query end-to-end (graph → query → predict → evaluate) before attempting another. Do not loop through multiple targets or generate batch predictions unless the user explicitly asks.
 - **Get API keys from `.env`, not chat.** Before asking the user for `KUMO_API_KEY` or other secrets, check for a `.env` file in the project and load it (`python-dotenv`). If the key isn't there, ask the user to add it to `.env` (not paste it in chat) so it persists across sessions. Also make sure `.env` is in `.gitignore`. **If authentication fails, stop — don't retry in a loop. Ask the user to provide or fix the key.**
-- **Don't mix RFM and Enterprise SDK code.** RFM (`kumoai.experimental.rfm`) is zero-shot prediction; Enterprise SDK (`kumoai`) is training custom models. They have different APIs — `rfm.Graph` vs `kumoai.Graph`, `model.predict()` vs `trainer.fit()`, different parameters, different imports. Pick one path based on the user's task and stick with it. Features like `lag_timesteps` on the training plan belong to Enterprise SDK, not RFM `predict()`. When in doubt, check `context/guides/rfm-vs-training.md`.
+- **Default to pre-trained (RFM), not fine-tuned.** When the user says "predict X" without specifying, use pre-trained RFM (`kumoai.experimental.rfm` → `rfm.Graph`, `rfm.KumoRFM`, `model.predict()`). Only use fine-tuned (`kumoai` → `kumoai.Graph`, `kumoai.Trainer`, `trainer.fit()`) when the user explicitly asks for training or production deployment. Do not mix the two — they have different APIs, imports, and parameters (e.g., `lag_timesteps` works differently in each). When in doubt, check `context/guides/rfm-vs-training.md`.
 - Validate at each step: `table.validate()`, `graph.validate()`, `pquery.validate(verbose=True)`.
 - Do not claim success unless the prediction ran and you show sample output.
 - If a request cannot be expressed as a valid predictive task, say so clearly and explain why.

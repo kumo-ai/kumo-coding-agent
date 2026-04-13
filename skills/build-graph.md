@@ -21,7 +21,7 @@ Select the right approach based on your data source and use case:
 | Zero-shot RFM + local DataFrames | RFM | `rfm.Graph.from_data()` |
 | Zero-shot RFM + Snowflake tables | RFM | `rfm.Graph.from_snowflake()` |
 | Zero-shot RFM + Snowflake semantic view | RFM | `rfm.Graph.from_snowflake_semantic_view()` |
-| Enterprise training + any connector | SDK | `kumoai.Graph()` with explicit tables and edges |
+| fine-tuned training + any connector | SDK | `kumoai.Graph()` with explicit tables and edges |
 
 **When to use RFM vs SDK:**
 - **RFM**: Fast zero-shot predictions, no training required, automatic schema inference

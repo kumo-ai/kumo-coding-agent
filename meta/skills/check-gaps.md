@@ -106,7 +106,7 @@ and not in `_gaps.yaml` is a **new gap** — add it.
 ### Still Open
 | ID | Feature | Priority | Notes |
 |----|---------|----------|-------|
-| plat-001 | Enterprise explainability | high | Still absent |
+| plat-001 | Fine-tuned explainability | high | Still absent |
 
 ### New Gaps Found
 | Feature | Source File | Suggested Priority |
