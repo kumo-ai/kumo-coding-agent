@@ -33,7 +33,7 @@ echo 'Also read kumo-coding-agent/CLAUDE.md for Kumo agent capabilities.' >> CLA
 **3. Install slash commands (optional):**
 
 ```bash
-npx skills add kumo-ai/kumo-coding-agent --all
+npx skills add kumo-ai/kumo-coding-agent --agent claude-code
 ```
 
 This installs `/kumo-issue` and `/kumo-pr` for reporting bugs and contributing fixes.
@@ -81,7 +81,7 @@ git submodule add https://github.com/kumo-ai/kumo-coding-agent.git kumo-coding-a
 **3. Install slash commands (optional):**
 
 ```bash
-npx skills add kumo-ai/kumo-coding-agent --all
+npx skills add kumo-ai/kumo-coding-agent --agent cursor
 ```
 
 **4. Start using it.** Ask questions in natural language.

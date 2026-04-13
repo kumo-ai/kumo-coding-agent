@@ -57,13 +57,16 @@ The same three commands are exposed to both tools from this repo:
 
 ### In other repos (global install)
 
-Run:
+Target your specific tool with `--agent` to avoid polluting the project with
+folders for every supported agent:
 
 ```bash
-npx skills add kumo-ai/kumo-coding-agent --all
-```
+# Claude Code
+npx skills add kumo-ai/kumo-coding-agent --agent claude-code
 
-This installs the commands for all supported tools.
+# Cursor
+npx skills add kumo-ai/kumo-coding-agent --agent cursor
+```
 
 If you prefer manual setup, symlink the same skill folders into those directories.
 

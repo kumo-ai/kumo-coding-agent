@@ -49,10 +49,14 @@ echo 'Also read kumo-coding-agent/CLAUDE.md for Kumo agent capabilities.' >> CLA
 
 ### Install slash commands (optional)
 
-For `/kumo-issue` and `/kumo-pr` in Claude Code and Cursor:
+For `/kumo-issue` and `/kumo-pr`, use the `--agent` flag to target only your tool (avoids polluting the project with folders for every other agent):
 
 ```bash
-npx skills add kumo-ai/kumo-coding-agent --all
+# Claude Code
+npx skills add kumo-ai/kumo-coding-agent --agent claude-code
+
+# Cursor
+npx skills add kumo-ai/kumo-coding-agent --agent cursor
 ```
 
 For Codex, use `$skill-installer` inside a Codex session:
