@@ -59,9 +59,11 @@ should. These apply to any dataset — not just benchmarks.
   ```
 - **Drop auto-generated columns**: Remove `__index_level_0__`, surrogate
   row IDs, or any column not part of the real schema.
-- **Drop other target columns**: If the dataset defines multiple prediction
-  targets, remove all except the one you're predicting. Otherwise they
-  leak information to the model.
+- **Remove anything that leaks the target**: Drop any column the target was
+  derived from (e.g., if `will_churn = (days_since_last_purchase > 90)`,
+  drop `days_since_last_purchase`). Also drop other prediction targets the
+  dataset defines. Keeping either causes leakage and produces suspiciously
+  high accuracy. **Always tell the user which columns you removed and why.**
 - **Mask test labels**: Set the target column to `None` for all test rows.
   This prevents the model from seeing future answers during prediction.
 
