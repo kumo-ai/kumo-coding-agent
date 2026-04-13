@@ -391,9 +391,12 @@ metrics_df = model.evaluate(query, run_mode="fast")
 print(metrics_df)
 ```
 
-**Held-out evaluation** — when the dataset has an official test split, or
-you need to compare against baselines, predict on the saved test entity
-IDs (from Step 1b) and compute metrics against ground-truth labels.
+**Held-out evaluation** — if the dataset has a pre-defined test split, or
+you're comparing RFM to a baseline model (ARIMA, XGBoost, etc.), you **MUST**
+use held-out evaluation. `model.evaluate()` uses its own internal split,
+which produces metrics that can't be compared fairly to a baseline trained
+on a different split. Predict on the saved test entity IDs (from Step 1b)
+and compute metrics against ground-truth labels.
 
 ```python
 # Predict on held-out test entities
