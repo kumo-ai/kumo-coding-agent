@@ -37,12 +37,13 @@ uv add mlflow                        # or: uv add wandb
 **Environment variables** — set before running:
 
 ```bash
-# RFM
-export KUMO_RFM_API_KEY="your-rfm-api-key"
-
-# Enterprise SDK
-export KUMO_API_URL="https://app.kumo.ai"
+# API key (works for both RFM and Enterprise SDK)
+# Get RFM keys from https://kumorfm.ai/api-keys
+# Get Enterprise keys from your Kumo workspace
 export KUMO_API_KEY="your-api-key"
+
+# Enterprise SDK only — set the workspace URL
+export KUMO_API_URL="https://app.kumo.ai"
 
 # Snowflake (if using Snowflake connector directly)
 export SNOWFLAKE_ACCOUNT="xy12345.us-east-1"
