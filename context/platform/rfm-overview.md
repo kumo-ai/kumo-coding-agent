@@ -465,10 +465,11 @@ result = model.predict(query, explain=rfm.ExplainConfig(skip_summary=True), run_
 
 ### TaskTable Flow
 
-Use `TaskTable` when you already have explicit context (training) and
-prediction rows prepared as DataFrames — for example, a custom train/test
-split or a task that is easier to express as a DataFrame than as a PQL query.
-For most use cases, prefer query-driven `model.predict()` instead.
+**Default to query-driven `model.predict()` with PQL.** Only use `TaskTable`
+when you already have explicit context (training) and prediction rows
+prepared as DataFrames — for example, a custom train/test split or a task
+that is genuinely easier to express as a DataFrame than as PQL. Writing a
+PQL query is almost always the simpler path.
 
 ```python
 task = rfm.TaskTable(

@@ -404,6 +404,10 @@ which produces metrics that can't be compared fairly to a baseline trained
 on a different split. Predict on the saved test entity IDs (from Step 1b)
 and compute metrics against ground-truth labels.
 
+Install `scikit-learn` for standard metrics (`%pip install scikit-learn`)
+rather than hand-rolling metric code with numpy — it's more accurate
+and standard.
+
 ```python
 # Predict on held-out test entities
 test_preds = model.predict(query, indices=test_entity_ids, run_mode="best")
