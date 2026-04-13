@@ -1,0 +1,8 @@
+blank_issues_enabled: false
+contact_links:
+  - name: Discord community
+    url: https://discord.com/invite/uNB4bJkapQ
+    about: Ask quick questions, share what you're building, or chat with the Kumo community.
+  - name: KumoRFM documentation
+    url: https://kumo-ai.github.io/kumo-sdk/docs/
+    about: SDK reference, PQL syntax, prediction patterns, and getting-started guides.

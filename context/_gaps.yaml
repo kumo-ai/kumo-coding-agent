@@ -209,10 +209,10 @@ documentation_gaps:
 platform_gaps:
 
   - id: plat-001
-    feature: "Enterprise SDK explainability"
+    feature: "fine-tuned SDK explainability"
     description: >
       No feature importance or explanation API on trained model results.
-      RFM has explain=True; Enterprise SDK does not.
+      RFM has explain=True; fine-tuned SDK does not.
     workaround: >
       Use RFM explain on the same query for feature importance.
       Or analyze holdout_df manually (compare predictions vs actuals,
