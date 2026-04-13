@@ -450,6 +450,21 @@ match published benchmark conditions.
 | Multiclass | `mrr`, `acc`, `f1` |
 | Regression | `rmse`, `mae`, `r2` |
 
+**Sanity-check metrics before reporting them to the user.** If you see any
+of these red flags, stop and investigate before claiming success:
+
+- **Accuracy = 1.0 or AUROC > 0.99**: almost certainly target leakage —
+  revisit Step 1b and drop columns derived from or correlated with the target.
+- **Accuracy ≈ 0.5 on binary classification**: the model learned nothing,
+  or the task has no signal. Check class balance and reframe the task.
+- **Accuracy matches majority-class rate**: the model is just predicting
+  the majority class. Report `auroc` / `f1` / `auprc` instead of `acc` on
+  imbalanced data.
+- **R² < 0 on regression**: the model is worse than predicting the mean.
+  The target may have no relational signal.
+
+Always tell the user what you checked and what you found.
+
 ### Step 7: Explain (Optional)
 
 Generate feature-importance explanations alongside predictions.
