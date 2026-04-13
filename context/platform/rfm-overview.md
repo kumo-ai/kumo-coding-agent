@@ -334,7 +334,7 @@ pred_df = model.predict(
 | `random_seed` | `int \| None` | `42` | Seed for reproducibility. `None` = non-deterministic. |
 | `use_prediction_time` | `bool` | `False` | Use anchor timestamp as a model feature. Enable for **time-series forecasting** where prediction time matters. |
 | `lag_timesteps` | `int` | `0` | Number of past timesteps included as lagged features. Use for autoregressive tasks where recent target values improve prediction. **Requires `kumoai>=2.18.0`.** |
-| `inference_config` | `InferenceConfig \| dict \| None` | `None` | Inference configuration (from `kumoapi.rfm`). Includes `RegressionInferenceConfig` and `ClassificationInferenceConfig` for task-specific settings. |
+| `inference_config` | `InferenceConfig \| dict \| None` | `None` | Inference configuration (from `kumoapi.rfm`). Includes `RegressionInferenceConfig` and `ClassificationInferenceConfig` for task-specific settings. **Requires `kumoai>=2.19.0`.** |
 
 **Returns**: `pd.DataFrame`. Columns depend on task type:
 - Binary classification: `ENTITY`, `ANCHOR_TIMESTAMP`, `TARGET_PRED`, `True_PROB`, `False_PROB`
