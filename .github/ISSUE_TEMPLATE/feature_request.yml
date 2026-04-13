@@ -1,0 +1,42 @@
+name: Feature request / new skill or context doc
+description: Suggest a new workflow, skill, vertical, or context doc the agent should know about.
+title: "[feature] "
+labels: ["enhancement"]
+body:
+  - type: textarea
+    id: problem
+    attributes:
+      label: What problem are you trying to solve?
+      description: Describe the use case, not the solution.
+      placeholder: e.g. The agent doesn't know how to set up Snowflake notebooks for Kumo.
+    validations:
+      required: true
+
+  - type: textarea
+    id: proposal
+    attributes:
+      label: Proposed addition
+      description: New skill, new context doc, new vertical, or change to an existing one.
+    validations:
+      required: true
+
+  - type: dropdown
+    id: kind
+    attributes:
+      label: Kind of contribution
+      options:
+        - New skill (workflow)
+        - New context doc (knowledge)
+        - New vertical (industry guide)
+        - New example notebook
+        - Update to existing doc
+        - Other
+    validations:
+      required: true
+
+  - type: checkboxes
+    id: contribute
+    attributes:
+      label: Are you willing to contribute this yourself?
+      options:
+        - label: Yes, I'd like to open a PR for this.

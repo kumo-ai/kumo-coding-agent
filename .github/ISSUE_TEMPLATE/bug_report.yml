@@ -1,0 +1,70 @@
+name: Bug report
+description: The agent gave wrong / outdated guidance, broken code, or hallucinated APIs.
+title: "[bug] "
+labels: ["bug"]
+body:
+  - type: markdown
+    attributes:
+      value: |
+        Thanks for taking the time to file a bug. The more concrete the
+        prompt and output, the faster we can fix it.
+
+  - type: input
+    id: agent-tool
+    attributes:
+      label: Coding tool
+      description: Which LLM tool were you using?
+      placeholder: e.g. Claude Code, Codex, Cursor
+    validations:
+      required: true
+
+  - type: input
+    id: agent-version
+    attributes:
+      label: kumo-coding-agent version
+      description: Run `cd kumo-coding-agent && git describe --tags`
+      placeholder: e.g. v1.0.0
+    validations:
+      required: true
+
+  - type: input
+    id: kumoai-version
+    attributes:
+      label: kumoai SDK version
+      description: Run `pip show kumoai | grep Version`
+      placeholder: e.g. 2.16.3
+    validations:
+      required: false
+
+  - type: textarea
+    id: prompt
+    attributes:
+      label: Prompt you gave the agent
+      render: text
+    validations:
+      required: true
+
+  - type: textarea
+    id: actual
+    attributes:
+      label: What the agent did
+      description: Code it generated, file it edited, or response it gave. Paste verbatim.
+      render: text
+    validations:
+      required: true
+
+  - type: textarea
+    id: expected
+    attributes:
+      label: What you expected
+    validations:
+      required: true
+
+  - type: textarea
+    id: pointer
+    attributes:
+      label: Suspected source
+      description: If you know which skill or context doc is wrong, point at it.
+      placeholder: e.g. skills/rfm-predict.md, context/platform/pql-syntax.md
+    validations:
+      required: false
