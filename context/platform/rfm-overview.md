@@ -333,7 +333,7 @@ pred_df = model.predict(
 | `max_pq_iterations` | `int` | `10` | Max iterations to find valid training labels. Increase (e.g. 200) for queries with strict filters. |
 | `random_seed` | `int \| None` | `42` | Seed for reproducibility. `None` = non-deterministic. |
 | `use_prediction_time` | `bool` | `False` | Use anchor timestamp as a model feature. Enable for **time-series forecasting** where prediction time matters. |
-| `lag_timesteps` | `int` | `0` | Number of past timesteps included as lagged features. Use for autoregressive tasks where recent target values improve prediction. |
+| `lag_timesteps` | `int` | `0` | Number of past timesteps included as lagged features. Use for autoregressive tasks where recent target values improve prediction. **Requires `kumoai>=2.18.0`.** |
 | `inference_config` | `InferenceConfig \| dict \| None` | `None` | Inference configuration (from `kumoapi.rfm`). Includes `RegressionInferenceConfig` and `ClassificationInferenceConfig` for task-specific settings. |
 
 **Returns**: `pd.DataFrame`. Columns depend on task type:

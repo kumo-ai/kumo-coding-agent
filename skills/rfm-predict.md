@@ -353,11 +353,15 @@ pred_df = model.predict(query, num_neighbors=[8, 8], run_mode="fast")
 pred_df = model.predict(query, use_prediction_time=True, run_mode="fast")
 ```
 
-**Autoregressive lag features:**
+**Autoregressive lag features** (requires `kumoai>=2.18.0`):
 
 ```python
 pred_df = model.predict(query, lag_timesteps=7, run_mode="fast")
 ```
+
+If the installed `kumoai` is older, `predict()` raises
+`TypeError: got an unexpected keyword argument 'lag_timesteps'`.
+Upgrade with `%pip install --upgrade kumoai` or remove the argument.
 
 **Increase label search for strict filters:**
 
