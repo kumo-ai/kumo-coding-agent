@@ -293,9 +293,15 @@ query = (
 | Maximum accuracy / final evaluation | `"best"` | ~10,000 | Several minutes |
 
 Default to `"best"` for the highest accuracy. If the user wants faster
-results, offer to switch to `"fast"` or `"normal"`. Also ask: "Do you
-need predictions for a small set of entities or a large batch?" — if
-large, use `batch_mode()`.
+results, offer to switch to `"fast"` or `"normal"`.
+
+**Always use `batch_mode()` for multi-entity predictions.** The SDK caps a
+single `predict()` call at **1,000 entities** (200 for link prediction) —
+above that it raises an error. Even below the cap, large requests OOM or
+time out in `"best"` mode or with large `num_neighbors`.
+`batch_mode(batch_size="max", num_retries=1)` auto-tunes the batch size,
+retries failures, and has no overhead for small batches. Only skip
+`batch_mode()` when predicting for a single entity (e.g., explainability).
 
 ```python
 model = rfm.KumoRFM(graph)
