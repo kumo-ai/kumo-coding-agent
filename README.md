@@ -196,6 +196,31 @@ kumo-coding-agent/
 
 ---
 
+## We love your feedback! ❤️
+
+As you work with the Kumo Coding Agent, if you encounter any problems or
+things that are confusing or don't work quite right, please
+[open a new issue](https://github.com/kumo-ai/kumo-coding-agent/issues/new).
+Join our [Discord](https://discord.com/invite/uNB4bJkapQ)!
+
+## Community contribution 🤝
+
+If you're considering contributing an example notebook or a new skill,
+please first [open a new issue](https://github.com/kumo-ai/kumo-coding-agent/issues/new)
+and describe your proposal so we can discuss it together before you invest a
+ton of time. We'll invite you to our Mountain View, CA office (if you're local)
+or send you Kumo Swag if your contribution is accepted.
+
+Thank you and excited to see what you'll build with the Kumo Coding Agent!
+
+---
+
+## License
+
+Released under the [MIT License](LICENSE).
+
+---
+
 <p align="center">
   Developed by <a href="https://kumo.ai">Kumo AI</a><br>
   &copy; 2026 Kumo AI, Inc. All rights reserved.
