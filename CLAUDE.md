@@ -48,6 +48,7 @@ Use `scratch/` for experiment state, job IDs, and intermediate results across se
 
 This agent works in **notebooks** (Jupyter, Colab) and **Python scripts** alike.
 
+- **Ask notebook vs script before starting**: If there's no `.ipynb` or `.py` file in the project yet, ask the user which output they want (notebook or script) before generating code. Don't default to one or the other — Jupyter users get scripts and vice versa, which is frustrating.
 - **Notebooks**: Generate code in cell-sized chunks — one logical step per cell. Use `graph.visualize()` for inline graph inspection. Prefer displaying DataFrames directly (they render as rich tables).
 - **Use `.venv/`, never system Python**: Reuse the project's `.venv/` if it exists with the right Python version (match the notebook kernel for `.ipynb` projects); otherwise create one. Run all commands through it (`.venv/bin/python`, `.venv/bin/pip`). Never use `python3` or `pip3`. Add `.venv/` to `.gitignore`.
 - **Run the full workflow in `.venv/` before writing it**: Execute the entire pipeline as a script inside the venv — load data, build graph, predict, verify output. Only after it runs cleanly, translate it into notebook cells or a `.py` file. Mirror every `pip install` as a `%pip install <pkg>==<version>` cell under `## Setup` at the top of the notebook.
