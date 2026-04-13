@@ -6,7 +6,7 @@
 
 Read this document when you need to connect to a user's data source. Kumo
 supports multiple backends — the right connector depends on where the data lives
-and whether you're using RFM (zero-shot) or the Enterprise SDK (training).
+and whether you're using RFM (zero-shot) or the fine-tuned SDK (training).
 
 ---
 
@@ -19,7 +19,7 @@ it first if not available: `curl -LsSf https://astral.sh/uv/install.sh | sh`
 uv init my-kumo-project && cd my-kumo-project
 
 # Core — always needed
-uv add kumoai              # Kumo SDK (includes RFM, Enterprise SDK, kumoapi)
+uv add kumoai              # Kumo SDK (includes RFM, fine-tuned SDK, kumoapi)
 
 # Data connectors — add what you need
 uv add snowflake-connector-python   # Snowflake (RFM path)
@@ -37,12 +37,13 @@ uv add mlflow                        # or: uv add wandb
 **Environment variables** — set before running:
 
 ```bash
-# RFM
-export KUMO_RFM_API_KEY="your-rfm-api-key"
-
-# Enterprise SDK
-export KUMO_API_URL="https://app.kumo.ai"
+# API key (works for both RFM and fine-tuned SDK)
+# Get RFM keys from https://kumorfm.ai/api-keys
+# Get fine-tuned keys from your Kumo workspace
 export KUMO_API_KEY="your-api-key"
+
+# fine-tuned SDK only — set the workspace URL
+export KUMO_API_URL="https://app.kumo.ai"
 
 # Snowflake (if using Snowflake connector directly)
 export SNOWFLAKE_ACCOUNT="xy12345.us-east-1"
@@ -54,7 +55,7 @@ export SNOWFLAKE_PASSWORD="MY_PASSWORD"   # or use key-pair / SSO
 
 ## Connector Reference
 
-### Enterprise SDK Connectors
+### fine-tuned SDK Connectors
 
 | Connector | Class | Key Arguments |
 |-----------|-------|---------------|
@@ -105,7 +106,7 @@ connection = snowflake.connector.connect(
 )
 ```
 
-**Enterprise SDK path:**
+**fine-tuned SDK path:**
 
 ```python
 import kumoai
@@ -135,7 +136,7 @@ connector = kumoai.SnowflakeConnector.get_by_name("my_sf_connector")
 - Data in Parquet or CSV format (one folder per table)
 
 ```python
-# Enterprise SDK
+# fine-tuned SDK
 connector = kumoai.S3Connector("s3://my-bucket/ecommerce/")
 print(connector.table_names())  # ['customers', 'orders', 'products']
 
@@ -159,7 +160,7 @@ fails, defaults to `,`.
 
 ### Local Files (CSV, Parquet)
 
-**RFM only** (Enterprise SDK requires cloud storage):
+**RFM only** (fine-tuned SDK requires cloud storage):
 
 ```python
 import pandas as pd
@@ -206,7 +207,7 @@ connector = kumoai.BigQueryConnector(
 
 After connecting, always discover what's available before building a graph.
 
-### Enterprise SDK
+### fine-tuned SDK
 
 ```python
 # List all tables
@@ -252,8 +253,8 @@ print(files)
 | "Data is in Snowflake" | `SnowflakeConnector` (SDK) or `from_snowflake` (RFM) | Most common for enterprise |
 | "Data is in S3" | `S3Connector` (SDK) or load to pandas (RFM) | Parquet format expected |
 | "I have CSV files" | Load to pandas → `from_data` (RFM only) | SDK requires cloud storage |
-| "Data is in Databricks" | `DatabricksConnector` (SDK only) | Enterprise SDK path |
-| "Data is in BigQuery" | `BigQueryConnector` (SDK only) | Enterprise SDK path |
+| "Data is in Databricks" | `DatabricksConnector` (SDK only) | fine-tuned SDK path |
+| "Data is in BigQuery" | `BigQueryConnector` (SDK only) | fine-tuned SDK path |
 | "I have a Semantic View" | `from_snowflake_semantic_view` (RFM) | Pre-validated graph structure |
 | "I don't know where data is" | Ask the user | Need account details first |
 
@@ -275,7 +276,7 @@ print(files)
 
 ## Quick Reference
 
-| Operation | Enterprise SDK | RFM |
+| Operation | fine-tuned SDK | RFM |
 |-----------|---------------|-----|
 | Connect | `kumoai.SnowflakeConnector(...)` | `snowflake.connector.connect(...)` |
 | List tables | `connector.table_names()` | `SHOW TABLES` or `graph.print_metadata()` |

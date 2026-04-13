@@ -1,4 +1,4 @@
-# Train a Model (Enterprise SDK)
+# Train a Model (fine-tuned SDK)
 
 Train a GNN model on historical relational data using the Kumo SDK for maximum prediction accuracy — unlike RFM zero-shot, training produces models tuned to your specific data and task.
 

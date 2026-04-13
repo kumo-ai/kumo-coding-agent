@@ -139,6 +139,10 @@ cause the query to fail.
   are connected by a single foreign key. No intermediate joins.
 - [ ] **Entity column is a primary key** — The column after `FOR EACH`
   must be the PK of its table.
+- [ ] **No explicit entity IDs with `FOR EACH`** — `FOR EACH table.pk`
+  means "all entities". Do not combine with `= 'id'` or `IN (...)`.
+  Pass specific entities via `model.predict(query, indices=[...])` instead.
+  Use `FOR table.pk = 'id'` only for single-entity queries without `EACH`.
 - [ ] **Table and column names are exact** — PQL is case-sensitive to the
   graph schema. Verify spelling against `graph.print_metadata()`.
 - [ ] **No unsupported operators** — PQL supports `>`, `<`, `>=`, `<=`,

@@ -20,7 +20,7 @@ that were visible in the raw data but not caught early.
 
 Before anything else, discover what's in the schema.
 
-**Enterprise SDK:**
+**fine-tuned SDK:**
 
 ```python
 import kumoai
@@ -76,7 +76,7 @@ your prediction task? Are any of these staging or archive tables?"
 
 For every table you plan to include, collect these stats:
 
-**Enterprise SDK:**
+**fine-tuned SDK:**
 
 ```python
 source = connector["CUSTOMERS"]

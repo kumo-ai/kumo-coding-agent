@@ -333,8 +333,8 @@ pred_df = model.predict(
 | `max_pq_iterations` | `int` | `10` | Max iterations to find valid training labels. Increase (e.g. 200) for queries with strict filters. |
 | `random_seed` | `int \| None` | `42` | Seed for reproducibility. `None` = non-deterministic. |
 | `use_prediction_time` | `bool` | `False` | Use anchor timestamp as a model feature. Enable for **time-series forecasting** where prediction time matters. |
-| `lag_timesteps` | `int` | `0` | Number of past timesteps included as lagged features. Use for autoregressive tasks where recent target values improve prediction. |
-| `inference_config` | `InferenceConfig \| dict \| None` | `None` | Inference configuration (from `kumoapi.rfm`). Includes `RegressionInferenceConfig` and `ClassificationInferenceConfig` for task-specific settings. |
+| `lag_timesteps` | `int` | `0` | Number of past timesteps included as lagged features. Use for autoregressive tasks where recent target values improve prediction. **Requires `kumoai>=2.18.0`.** |
+| `inference_config` | `InferenceConfig \| dict \| None` | `None` | Inference configuration (from `kumoapi.rfm`). Includes `RegressionInferenceConfig` and `ClassificationInferenceConfig` for task-specific settings. **Requires `kumoai>=2.19.0`.** |
 
 **Returns**: `pd.DataFrame`. Columns depend on task type:
 - Binary classification: `ENTITY`, `ANCHOR_TIMESTAMP`, `TARGET_PRED`, `True_PROB`, `False_PROB`
@@ -465,10 +465,11 @@ result = model.predict(query, explain=rfm.ExplainConfig(skip_summary=True), run_
 
 ### TaskTable Flow
 
-Use `TaskTable` when you already have explicit context (training) and
-prediction rows prepared as DataFrames — for example, a custom train/test
-split or a task that is easier to express as a DataFrame than as a PQL query.
-For most use cases, prefer query-driven `model.predict()` instead.
+**Default to query-driven `model.predict()` with PQL.** Only use `TaskTable`
+when you already have explicit context (training) and prediction rows
+prepared as DataFrames — for example, a custom train/test split or a task
+that is genuinely easier to express as a DataFrame than as PQL. Writing a
+PQL query is almost always the simpler path.
 
 ```python
 task = rfm.TaskTable(

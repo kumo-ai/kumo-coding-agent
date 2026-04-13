@@ -8,7 +8,7 @@ Run instant predictions on relational data using KumoRFM — no model training r
 
 - `kumoai>=2.16.3` installed (`uv add kumoai` — see `context/platform/data-connectors.md` for full setup)
 - For notebooks: `pip install --upgrade jupyter ipywidgets` (needed for progress bars and rich output)
-- API key set: `export KUMO_RFM_API_KEY=...` or pass to `rfm.init()`
+- API key set: `export KUMO_API_KEY=...` or pass to `rfm.init()`
 - Data accessible: local DataFrames, Snowflake connection, or Snowflake
   Semantic View
 - **Read first**: `context/platform/rfm-overview.md`
@@ -30,7 +30,7 @@ print(f"kumoai version: {kumoai.__version__}")
 # Option A: Explicit API key
 rfm.init(api_key="your-api-key", url="https://kumorfm.ai/api")
 
-# Option B: Environment variable (KUMO_RFM_API_KEY)
+# Option B: Environment variable (KUMO_API_KEY)
 rfm.init(url="https://kumorfm.ai/api")
 
 # Option C: Colab — browser-based login (opens auth widget)
@@ -59,9 +59,11 @@ should. These apply to any dataset — not just benchmarks.
   ```
 - **Drop auto-generated columns**: Remove `__index_level_0__`, surrogate
   row IDs, or any column not part of the real schema.
-- **Drop other target columns**: If the dataset defines multiple prediction
-  targets, remove all except the one you're predicting. Otherwise they
-  leak information to the model.
+- **Remove anything that leaks the target**: Drop any column the target was
+  derived from (e.g., if `will_churn = (days_since_last_purchase > 90)`,
+  drop `days_since_last_purchase`). Also drop other prediction targets the
+  dataset defines. Keeping either causes leakage and produces suspiciously
+  high accuracy. **Always tell the user which columns you removed and why.**
 - **Mask test labels**: Set the target column to `None` for all test rows.
   This prevents the model from seeing future answers during prediction.
 
@@ -208,9 +210,15 @@ graph["orders"].print_metadata()
 3. **Time columns are correct** — temporal queries require a valid
    datetime/timestamp column on the target table. Confirm the column is
    detected as `time` type, not `string`.
-4. **Links are semantically correct** — a foreign key from `orders.user_id`
-   to `users.user_id` means "each order belongs to one user". If a link is
-   wrong or missing, fix it manually.
+4. **Links are semantically correct and complete** — a foreign key from
+   `orders.user_id` to `users.user_id` means "each order belongs to one
+   user". If the graph has no FK links but the data clearly has
+   relationships (e.g., columns with matching IDs across tables),
+   **stop and add them with `graph.link()` before predicting** — otherwise
+   the query will fail with a multi-hop path error. If the data genuinely
+   has no cross-table relationships (single table, or independent tables),
+   that's fine — predictions are limited to static tasks on a single
+   table (e.g., `PREDICT table.column FOR EACH table.pk`).
 5. **No duplicate or phantom tables** — schema imports can pick up views,
    staging tables, or system tables that do not belong in the graph.
 
@@ -285,9 +293,15 @@ query = (
 | Maximum accuracy / final evaluation | `"best"` | ~10,000 | Several minutes |
 
 Default to `"best"` for the highest accuracy. If the user wants faster
-results, offer to switch to `"fast"` or `"normal"`. Also ask: "Do you
-need predictions for a small set of entities or a large batch?" — if
-large, use `batch_mode()`.
+results, offer to switch to `"fast"` or `"normal"`.
+
+**Always use `batch_mode()` for multi-entity predictions.** The SDK caps a
+single `predict()` call at **1,000 entities** (200 for link prediction) —
+above that it raises an error. Even below the cap, large requests OOM or
+time out in `"best"` mode or with large `num_neighbors`.
+`batch_mode(batch_size="max", num_retries=1)` auto-tunes the batch size,
+retries failures, and has no overhead for small batches. Only skip
+`batch_mode()` when predicting for a single entity (e.g., explainability).
 
 ```python
 model = rfm.KumoRFM(graph)
@@ -351,11 +365,15 @@ pred_df = model.predict(query, num_neighbors=[8, 8], run_mode="fast")
 pred_df = model.predict(query, use_prediction_time=True, run_mode="fast")
 ```
 
-**Autoregressive lag features:**
+**Autoregressive lag features** (requires `kumoai>=2.18.0`):
 
 ```python
 pred_df = model.predict(query, lag_timesteps=7, run_mode="fast")
 ```
+
+If the installed `kumoai` is older, `predict()` raises
+`TypeError: got an unexpected keyword argument 'lag_timesteps'`.
+Upgrade with `%pip install --upgrade kumoai` or remove the argument.
 
 **Increase label search for strict filters:**
 
@@ -385,9 +403,16 @@ metrics_df = model.evaluate(query, run_mode="fast")
 print(metrics_df)
 ```
 
-**Held-out evaluation** — when the dataset has an official test split, or
-you need to compare against baselines, predict on the saved test entity
-IDs (from Step 1b) and compute metrics against ground-truth labels.
+**Held-out evaluation** — if the dataset has a pre-defined test split, or
+you're comparing RFM to a baseline model (ARIMA, XGBoost, AutoGluon, etc.), you **MUST**
+use held-out evaluation. `model.evaluate()` uses its own internal split,
+which produces metrics that can't be compared fairly to a baseline trained
+on a different split. Predict on the saved test entity IDs (from Step 1b)
+and compute metrics against ground-truth labels.
+
+Install `scikit-learn` for standard metrics (`%pip install scikit-learn`)
+rather than hand-rolling metric code with numpy — it's more accurate
+and standard.
 
 ```python
 # Predict on held-out test entities
@@ -424,6 +449,21 @@ match published benchmark conditions.
 | Binary classification | `auroc`, `precision`, `recall`, `f1`, `acc` |
 | Multiclass | `mrr`, `acc`, `f1` |
 | Regression | `rmse`, `mae`, `r2` |
+
+**Sanity-check metrics before reporting them to the user.** If you see any
+of these red flags, stop and investigate before claiming success:
+
+- **Accuracy = 1.0 or AUROC > 0.99**: almost certainly target leakage —
+  revisit Step 1b and drop columns derived from or correlated with the target.
+- **Accuracy ≈ 0.5 on binary classification**: the model learned nothing,
+  or the task has no signal. Check class balance and reframe the task.
+- **Accuracy matches majority-class rate**: the model is just predicting
+  the majority class. Report `auroc` / `f1` / `auprc` instead of `acc` on
+  imbalanced data.
+- **R² < 0 on regression**: the model is worse than predicting the mean.
+  The target may have no relational signal.
+
+Always tell the user what you checked and what you found.
 
 ### Step 7: Explain (Optional)
 

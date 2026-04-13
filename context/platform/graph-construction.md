@@ -5,7 +5,7 @@
 ## Overview
 
 Read this document when you need to build, validate, or repair a graph object
-in either the RFM (zero-shot) or Enterprise SDK workflow. The **graph** is the
+in either the RFM (zero-shot) or fine-tuned SDK workflow. The **graph** is the
 central abstraction in Kumo — it connects relational tables via foreign-key to
 primary-key edges and tells the platform how to traverse relationships when
 constructing features and training models.
@@ -79,7 +79,7 @@ Use when tables span multiple schemas or automatic inference needs overrides.
 
 ---
 
-## Enterprise SDK Graphs
+## fine-tuned SDK Graphs
 
 The SDK gives explicit control over every table, column, and edge.
 

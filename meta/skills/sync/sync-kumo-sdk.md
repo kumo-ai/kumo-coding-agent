@@ -1,7 +1,7 @@
 # Sync from kumo-sdk
 
 Update kumo-coding-agent context docs when a new version of the `kumoai` package is
-released. Covers RFM API, Enterprise SDK, graph construction, and connectors.
+released. Covers RFM API, fine-tuned SDK, graph construction, and connectors.
 
 ---
 
@@ -95,7 +95,7 @@ Record which gaps are now resolvable. These will be documented in Step 4.
 | doc-010 | endpoint.ping() | `def ping` | kumoai/trainer/online_serving.py |
 | doc-011 | BaselineJobResult.metrics() | `class BaselineJobResult` | kumoai/trainer/job.py |
 | doc-012 | prediction_table.anchor_time() | `def anchor_time` | kumoai/pquery/prediction_table.py |
-| plat-001 | Enterprise explainability | `explain` in trainer/ | kumoai/trainer/ |
+| plat-001 | Fine-tuned explainability | `explain` in trainer/ | kumoai/trainer/ |
 | plat-002 | Per-example explanations | `explain` in trainer/ | kumoai/trainer/ |
 
 ### Step 3: Diff Source Files
@@ -155,7 +155,7 @@ After updating docs, verify:
 1. **RFM API signatures**: Every `model.predict()` / `model.evaluate()` call in
    `platform/rfm-overview.md` and `skills/rfm-predict.md` must match actual `rfm.py`
 
-2. **Enterprise SDK signatures**: Every `trainer.fit()` / `trainer.predict()` call
+2. **fine-tuned SDK signatures**: Every `trainer.fit()` / `trainer.predict()` call
    in `platform/sdk-overview.md` and `skills/train-model.md` must match actual code
 
 3. **Cross-repo types**: If RunMode or TimeUnit references appear in updated docs,

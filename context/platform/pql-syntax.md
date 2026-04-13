@@ -23,8 +23,8 @@ PREDICT <target> [FORECAST N TIMEFRAMES] [CLASSIFY|RANK] [TOP K] (FOR EACH|FOR) 
 |-----------|----------|-------------|
 | `PREDICT` | Yes | Keyword that starts every query |
 | `<target>` | Yes | What to predict — a column value or aggregation |
-| `FORECAST N TIMEFRAMES` | No | Generate N forecast periods (Enterprise only) |
-| `CLASSIFY` / `RANK` | No | Problem type for multicategorical targets (Enterprise only) |
+| `FORECAST N TIMEFRAMES` | No | Generate N forecast periods (fine-tuned only) |
+| `CLASSIFY` / `RANK` | No | Problem type for multicategorical targets (fine-tuned only) |
 | `TOP K` | No | Return top-K results (used with RANK) |
 | `FOR EACH` | Yes* | Keyword introducing the entity to predict for (batch mode) |
 | `FOR` | Yes* | Single-entity mode: `FOR table.pk = 'ID'` (RFM only) |
@@ -61,8 +61,8 @@ PREDICT users.membership_tier FOR EACH users.user_id
 Predict an aggregated value over a future (or past-to-future) time window.
 
 **Supported aggregations:**
-- RFM + Enterprise: `SUM`, `AVG`, `MIN`, `MAX`, `COUNT`, `LIST_DISTINCT`
-- Enterprise only: `COUNT_DISTINCT`, `FIRST`, `LAST`
+- RFM + fine-tuned: `SUM`, `AVG`, `MIN`, `MAX`, `COUNT`, `LIST_DISTINCT`
+- Fine-tuned only: `COUNT_DISTINCT`, `FIRST`, `LAST`
 
 **Syntax:**
 
@@ -129,7 +129,7 @@ This predicts the **probability** that the condition is true (e.g., probability 
 
 **Supported comparisons:** `>`, `>=`, `<`, `<=`, `=`, `!=`
 
-### Forecasting (Enterprise Only)
+### Forecasting (Fine-tuned Only)
 
 Generate predictions across multiple future time periods.
 
@@ -153,7 +153,7 @@ PREDICT LIST_DISTINCT(orders.product_id, 0, 30, days) FOR EACH users.user_id
 **Rules:**
 - The target column of `LIST_DISTINCT` must be registered as a **foreign key** in the graph
 - Used for link prediction and recommendation tasks
-- Enterprise SDK also supports `RANK TOP K` and `CLASSIFY` modifiers for ranking output
+- Fine-tuned SDK also supports `RANK TOP K` and `CLASSIFY` modifiers for ranking output
 
 ---
 
@@ -201,9 +201,9 @@ PREDICT ... FOR EACH users.user_id WHERE users.signup_date > '2024-01-01'
 | `>` | Greater than | |
 | `<=` | Less than or equal to | |
 | `>=` | Greater than or equal to | |
-| `LIKE` / `NOT LIKE` | Pattern matching | Enterprise only, blocked in RFM |
-| `CONTAINS` / `NOT CONTAINS` | Substring match | Enterprise only, blocked in RFM |
-| `STARTS WITH` / `ENDS WITH` | Prefix/suffix match | Enterprise only, blocked in RFM |
+| `LIKE` / `NOT LIKE` | Pattern matching | fine-tuned only, blocked in RFM |
+| `CONTAINS` / `NOT CONTAINS` | Substring match | fine-tuned only, blocked in RFM |
+| `STARTS WITH` / `ENDS WITH` | Prefix/suffix match | fine-tuned only, blocked in RFM |
 
 ### NULL Checks
 
@@ -328,15 +328,15 @@ Predict completed electronics order total in the next 30 days for US and Canadia
 
 ## Unsupported and Restricted Operations
 
-### Restricted Aggregations (Enterprise Only)
+### Restricted Aggregations (Fine-tuned Only)
 
 These are valid PQL syntax but blocked in RFM mode:
 
 | Operation | Status | Notes |
 |-----------|--------|-------|
-| `COUNT_DISTINCT` | Enterprise only | Blocked in RFM |
-| `FIRST` | Enterprise only | Blocked in RFM |
-| `LAST` | Enterprise only | Blocked in RFM |
+| `COUNT_DISTINCT` | fine-tuned only | Blocked in RFM |
+| `FIRST` | fine-tuned only | Blocked in RFM |
+| `LAST` | fine-tuned only | Blocked in RFM |
 
 ### Unsupported Aggregations
 
@@ -362,7 +362,7 @@ These do not exist in the PQL grammar:
 | Pattern | Example | Why |
 |---------|---------|-----|
 | `LIKE` / pattern matching | `WHERE name LIKE '%smith%'` | In grammar but blocked in RFM mode |
-| `RANK TOP K` | Top 10 customers by spend | Enterprise only (multicategorical targets) |
+| `RANK TOP K` | Top 10 customers by spend | fine-tuned only (multicategorical targets) |
 | Nested aggregations | `AVG(SUM(...))` | Only single-level aggregation |
 | Multi-hop joins | Predicting across 3+ tables | FK path must be direct |
 | Subqueries | `WHERE x IN (SELECT ...)` | Not in grammar |
@@ -373,7 +373,7 @@ These do not exist in the PQL grammar:
 
 | Unsupported | Workaround |
 |-------------|------------|
-| `COUNT_DISTINCT` in RFM | Use `COUNT(orders.* WHERE orders.product_id IS NOT NULL, ...)` or switch to Enterprise |
+| `COUNT_DISTINCT` in RFM | Use `COUNT(orders.* WHERE orders.product_id IS NOT NULL, ...)` or switch to fine-tuned |
 | Past-only window `(-30, -1, days)` | Use `(-30, 1, days)` — window must extend into the future |
 | `LIKE` filtering in RFM | Use `=` with exact values or `IN` with a list |
 | Multi-hop prediction | Break into separate queries along direct FK paths |
@@ -382,11 +382,11 @@ These do not exist in the PQL grammar:
 
 ## Quick Reference Card
 
-**Supported Aggregations:** `SUM`, `AVG`, `MIN`, `MAX`, `COUNT`, `LIST_DISTINCT` (all modes); `COUNT_DISTINCT`, `FIRST`, `LAST` (Enterprise only)
+**Supported Aggregations:** `SUM`, `AVG`, `MIN`, `MAX`, `COUNT`, `LIST_DISTINCT` (all modes); `COUNT_DISTINCT`, `FIRST`, `LAST` (fine-tuned only)
 
 **Time Units:** `days`, `hours`, `minutes`, `months`
 
-**Comparison Operators:** `=`, `!=`, `<`, `>`, `<=`, `>=`, `LIKE`, `CONTAINS`, `STARTS WITH`, `ENDS WITH` (Enterprise only for string ops)
+**Comparison Operators:** `=`, `!=`, `<`, `>`, `<=`, `>=`, `LIKE`, `CONTAINS`, `STARTS WITH`, `ENDS WITH` (fine-tuned only for string ops)
 
 **Logical Operators:** `AND`, `OR`, `NOT`
 
