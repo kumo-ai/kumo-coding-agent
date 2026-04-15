@@ -21,7 +21,7 @@ Works with **Claude Code**, **Codex**, **Cursor**, and any tool that reads markd
 
 ```bash
 cd your-project
-git submodule add https://github.com/kumo-ai/kumo-coding-agent.git kumo-coding-agent
+git clone https://github.com/kumo-ai/kumo-coding-agent.git
 ```
 
 **2. Tell Claude Code to read the agent:**
@@ -52,7 +52,7 @@ This installs `/kumo-issue` and `/kumo-pr` for reporting bugs and contributing f
 
 ```bash
 cd your-project
-git submodule add https://github.com/kumo-ai/kumo-coding-agent.git kumo-coding-agent
+git clone https://github.com/kumo-ai/kumo-coding-agent.git
 ```
 
 **2. No extra setup needed.** Codex reads `AGENTS.md` automatically.
@@ -73,7 +73,7 @@ $skill-installer install https://github.com/kumo-ai/kumo-coding-agent
 
 ```bash
 cd your-project
-git submodule add https://github.com/kumo-ai/kumo-coding-agent.git kumo-coding-agent
+git clone https://github.com/kumo-ai/kumo-coding-agent.git
 ```
 
 **2. No extra setup needed.** Cursor reads `.cursor/rules/` automatically.
@@ -93,7 +93,7 @@ npx skills add kumo-ai/kumo-coding-agent --agent cursor
 Clone the repo into your project. Any LLM tool that reads markdown can use `CLAUDE.md` as the entry point.
 
 ```bash
-git clone https://github.com/kumo-ai/kumo-coding-agent.git kumo-coding-agent
+git clone https://github.com/kumo-ai/kumo-coding-agent.git
 ```
 
 ---
@@ -103,25 +103,13 @@ git clone https://github.com/kumo-ai/kumo-coding-agent.git kumo-coding-agent
 To pull the latest version of the agent:
 
 ```bash
-git submodule update --remote kumo-coding-agent
-```
-
-If you used `git clone` instead of submodule:
-
-```bash
 cd kumo-coding-agent && git pull
 ```
 
-**For cloning projects containing `kumo-coding-agent`:** Git submodules are
-stored as references, not files. The `kumo-coding-agent/` folder will be
-empty unless you include `--recurse-submodules`:
+To pin to a specific release:
 
 ```bash
-# When cloning for the first time:
-git clone --recurse-submodules <your-project-repo>
-
-# If already cloned and the folder is empty:
-git submodule init && git submodule update
+cd kumo-coding-agent && git fetch --tags && git checkout v1.0.0
 ```
 
 ---
