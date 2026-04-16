@@ -583,3 +583,30 @@ pred_df = model.predict("PREDICT context.target=1 FOR EACH context.index")
 
 10. **Requesting unsupported tasks.** Clustering, anomaly detection, and other
     tasks without a clear target column are not supported by RFM.
+
+11. **Using `FORECAST N TIMEFRAMES` with multiple entities.** The `FORECAST`
+    task type only supports a single entity at prediction time. Calling
+    `rfm.predict()` with `indices` containing more than one ID raises:
+    `ValueError: Forecasting requires a single entity ID, but got N unique IDs`.
+
+    For multi-entity batch forecasting, use **N separate temporal regression
+    calls sharing the same anchor and non-overlapping windows** — this is
+    identical to what `FORECAST N TIMEFRAMES` does internally:
+
+    ```python
+    ANCHOR = pd.Timestamp("2025-01-01")
+    parts  = []
+    for day_offset in range(1, N + 1):
+        query = (
+            f"PREDICT SUM(table.col, {day_offset - 1}, {day_offset}, days) "
+            f"FOR EACH entity.pk"
+        )
+        with rfm.batch_mode(batch_size="max"):
+            pred_df = rfm.predict(query, indices=all_ids, anchor_time=ANCHOR, ...)
+        pred_df["timeframe"] = day_offset
+        parts.append(pred_df)
+    all_preds = pd.concat(parts, ignore_index=True)
+    ```
+
+    Key constraints: keep the anchor fixed across all calls, and ensure windows
+    are non-overlapping (see pitfall #7).
