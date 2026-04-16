@@ -435,8 +435,12 @@ metrics = result.metrics()
 # metrics.test_metrics, metrics.validation_metrics, metrics.training_metrics
 
 # Holdout data for manual analysis
-holdout_df = result.holdout_df()          # Load into memory
+holdout_df = result.holdout_df()          # Load into memory (cols: ENTITY, TARGET, TARGET_PRED)
 holdout_url = result.holdout_url()        # Presigned URL (large datasets)
+
+# Retrieve custom tags set when Trainer.fit() was called
+job  = kumo.TrainingJob(job_id)
+tags = job.get_tags()   # e.g. {"model": "gnn", "horizon": "1"}
 ```
 
 **Job event log (debug failures):**
@@ -625,6 +629,8 @@ endpoint.destroy()                         # Tear down endpoint
 | `Trainer` | `.predict(graph, pred_table)` | Run batch predictions |
 | `TrainingJobResult` | `.metrics()` | Evaluation results |
 | `TrainingJobResult` | `.model_plan` | Actual ModelPlan after AutoML |
+| `TrainingJobResult` | `.holdout_df()` | Holdout split as DataFrame (ENTITY, TARGET, TARGET_PRED) |
+| `TrainingJob` | `.get_tags()` | Custom tag dict set at training time |
 | `TrainingJob` | `.progress()` | Per-epoch training metrics |
 | `TrainingJob` | `.attach()` | Block with live progress bar |
 | `TrainingJob` | `.cancel()` | Cancel in-progress job |
