@@ -83,16 +83,18 @@ AGGREGATION(table.column)                          -- static aggregation (no tim
 | Window | Meaning |
 |--------|---------|
 | `(0, 30, days)` | Next 30 days from prediction time |
-| `(-7, 30, days)` | From 7 days ago to 30 days from now |
-| `(-INF, 30, days)` | From the infinite past to 30 days from now |
 | `(0, 24, hours)` | Next 24 hours |
 | `(0, 3, months)` | Next 3 months |
+| `(-7, 30, days)` | From 7 days ago to 30 days from now — **only valid inside a `WHERE` filter condition** (see below), not the PREDICT target |
+| `(-INF, 30, days)` | From the infinite past to 30 days from now — **`WHERE`-filter only** |
 
 **Important rules:**
-- `start` must be less than `end`
-- The `end` value must be positive (i.e., extend into the future)
-- Use `-INF` or `-INFINITY` for unbounded past windows
-- Past-only windows (both start and end negative) are **not supported**
+- `start` must be less than `end`.
+- **The PREDICT target aggregation (and `ASSUMING` aggregations) require a non-negative `start` — both `start` and `end` must be `>= 0`.** A negative or `-INF` `start` in the target is rejected by the validator: *"cannot have an aggregation in the past. Both start and end need to be non negative."* (`kumo-pql` `time_range_validator.py`, target validated with `allow_past_looking=False`).
+- A negative or `-INF` `start` (a past-looking window) is allowed **only inside a `WHERE` filter condition**, e.g. `PREDICT ... FOR EACH users.user_id WHERE SUM(orders.amount, -30, 0, days) > 100`.
+- The `end` value must be positive for the target (i.e., extend into the future).
+- Use `-INF` or `-INFINITY` for unbounded past windows (in `WHERE` filters).
+- Past-only windows (both `start` and `end` negative) are **not supported**.
 
 **Examples:**
 
@@ -100,7 +102,7 @@ AGGREGATION(table.column)                          -- static aggregation (no tim
 PREDICT SUM(orders.amount, 0, 30, days) FOR EACH users.user_id
 PREDICT COUNT(claims.*, 0, 90, days) FOR EACH policies.policy_id
 PREDICT AVG(transactions.amount, 0, 7, days) FOR EACH accounts.account_id
-PREDICT MAX(orders.amount, -INF, 30, days) FOR EACH users.user_id
+PREDICT MAX(orders.amount, 0, 30, days) FOR EACH users.user_id
 ```
 
 ### Filtered Aggregations
@@ -310,12 +312,14 @@ PREDICT SUM(orders.amount, 0, 30, days) FOR EACH users.user_id ASSUMING orders.d
 ```
 Predict next-30-day spend if a 10% discount is applied.
 
-### 7. Infinite Past Window
+### 7. Infinite Past Window (in a WHERE filter)
 
 ```
-PREDICT MAX(orders.amount, -INF, 30, days) FOR EACH users.user_id
+PREDICT SUM(orders.amount, 0, 30, days) FOR EACH users.user_id WHERE COUNT(orders.*, -INF, 0, days) > 5
 ```
-Predict the maximum order amount from all history through the next 30 days.
+Predict next-30-day spend for users with more than 5 lifetime orders. An
+unbounded/`-INF` past window is only valid inside a `WHERE` filter condition —
+the PREDICT target aggregation itself must use a non-negative `start`.
 
 ### 8. Complex Condition
 
