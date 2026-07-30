@@ -1,0 +1,445 @@
+---
+title: "VS Code + Kumo Agent"
+description: "Set up VS Code with the Kumo coding agent"
+slug: "rfm/setup/vscode-kumo-agent"
+icon: "code"
+---
+
+<img src="/images/rfm/agent-vscode.svg" alt="VS Code" style={{height: "100px", width: "auto"}} />
+
+## Overview
+
+This guide walks you through setting up the **KumoRFM SDK** and **Kumo Coding Agent** for use with **KumoRFM** in a **VS Code** project workflow.
+
+Unlike the notebook-based setup, this guide focuses on working with regular Python files, the VS Code integrated terminal, and coding-agent workflows that edit scripts, configuration, and project files directly.
+
+This guide assumes minimal prior experience with VS Code, Python virtual environments, and coding agents. If you already have a preferred local setup, you can jump directly to the relevant sections.
+
+## Prerequisites
+
+Make sure you have:
+
+1.  VS Code installed ([Download](https://code.visualstudio.com/download))
+2.  Python installed at the system level
+3.  The endpoint URL of a deployed KumoRFM NIM and, when required, a gateway API key
+4.  An OpenAI or Anthropic subscription (recommended if you plan to use the Kumo Coding Agent)
+      - **OpenAI Codex** ([Subscribe](https://openai.com/codex))
+      - **Anthropic Claude Code** ([Subscribe](https://claude.com/product/claude-code))
+5.  Homebrew (macOS package manager) ([Install](https://brew.sh/))
+6.  GitHub CLI installed and authenticated (required for installing coding-agent skills and some GitHub-powered workflows)
+
+`🖥 Terminal`
+
+``` bash
+brew install gh
+gh auth status
+gh auth login
+```
+
+## Part 1: Setup for VS Code + KumoRFM SDK
+
+### Step 1: Create or Open a Project Folder
+
+Start with a normal VS Code project folder rather than a notebook file.
+
+1.  Open **VS Code**
+2.  Choose **File -\> Open Folder**
+3.  Create or open a project directory such as `kumo-demo`
+
+A simple starter structure works well:
+
+``` text
+kumo-demo/
+├── .venv/
+├── data/
+├── scripts/
+├── models/
+└── README.md
+```
+
+<Tip>
+Keeping your data, scripts, and generated outputs in one project folder makes it much easier for Codex or Claude Code to understand your workflow.
+</Tip>
+### Step 2: Create a Python Virtual Environment
+
+Open the VS Code integrated terminal:
+
+  - Use **Terminal -\> New Terminal**
+  - Or press `Ctrl + backtick`
+
+Then create a virtual environment inside the project:
+
+`🖥 Terminal`
+
+``` bash
+python3 -m venv .venv
+source .venv/bin/activate
+```
+
+If VS Code prompts you to select a Python interpreter, choose the one from your local `.venv` directory.
+
+You can also manually choose it:
+
+1.  Open the **Command Palette** (`Cmd + Shift + P`)
+2.  Search for `Python: Select Interpreter`
+3.  Select the interpreter inside `.venv`
+
+### Step 3: Install the KumoRFM SDK
+
+Install the SDK inside the active virtual environment:
+
+`🖥 Terminal`
+
+``` bash
+pip install "nvidia-sdfm[kumorfm]"
+```
+
+Verify the installation:
+
+`🖥 Terminal`
+
+``` bash
+python -c "from nvidia_sdfm import SDFMClient, kumorfm; print('NVIDIA SDFM SDK loaded successfully')"
+```
+
+### Step 4: Configure the KumoRFM NIM Connection
+
+Set the NIM endpoint URL in the integrated terminal. Set an API key only when an authenticating gateway protects the deployment:
+
+`🖥 Terminal`
+
+``` bash
+export KUMORFM_NIM_URL="http://localhost:8000"
+# Optional for an authenticated gateway:
+export NVIDIA_API_KEY="YOUR_GATEWAY_API_KEY"
+```
+
+Create `scripts/setup_kumo.py`:
+
+``` python
+import os
+from nvidia_sdfm import SDFMClient
+
+url = os.environ.get("KUMORFM_NIM_URL", "http://localhost:8000")
+api_key = os.environ.get("NVIDIA_API_KEY")
+
+with SDFMClient(url=url, api_key=api_key) as client:
+    print(client.health_ready())
+    print(client.capabilities("kumo-rfm"))
+```
+
+Run the script with `python scripts/setup_kumo.py`.
+
+`graph.visualize()` renders a self-contained Mermaid diagram. It does not require Graphviz.
+
+## Part 2: Using the VS Code CLI Workflow
+
+The VS Code integrated terminal is one of the easiest ways to work with the KumoRFM SDK in an editor-based workflow.
+
+Instead of switching between separate apps, you can keep all of the following in one place:
+
+  - your Python scripts
+  - your terminal commands
+  - your coding agent chat panel
+  - project files such as `README.md`, config files, and sample queries
+
+Common tasks you can run directly from the integrated terminal include:
+
+`🖥 Terminal`
+
+``` bash
+source .venv/bin/activate
+python scripts/setup_kumo.py
+python scripts/run_prediction.py
+```
+
+This workflow works especially well when:
+
+  - you want reproducible scripts instead of interactive notebook cells
+  - you want Codex or Claude Code to edit source files directly
+  - you want to commit your work to Git as normal Python code
+  - you want to run the same setup locally, in CI, or on another machine
+
+<Tip>
+A good pattern is to keep small entry-point scripts in `scripts/` and ask the coding agent to edit those files rather than generating one-off terminal commands each time.
+</Tip>
+## Part 3: Add a Coding Agent (Optional)
+
+Choose **one** of the following to add an AI coding agent to your workflow:
+
+<Tabs>
+<Tab title="Flow A - OpenAI Codex">
+
+**Step 1: Install the VS Code Extension**
+
+1.  Open VS Code Extensions (`Cmd + Shift + X`)
+2.  Search for **"Codex - OpenAI's coding agent"**
+3.  Install the extension
+
+**Authenticate:**
+
+  - Sign in with ChatGPT (recommended)
+  - Or configure `~/.codex/config.toml`
+
+**Open Codex using:**
+
+  - the ChatGPT icon in the top-right corner added by the extension
+
+<Tip>
+Reload VS Code if the extension does not appear immediately.
+</Tip>
+**Step 2: Install the Kumo Coding Agent**
+
+The Kumo Coding Agent has two parts:
+
+  - **Context** (knowledge base): documentation, PQL rules, workflow guides, and connector references that teach the agent how to use the Kumo platform
+  - **Skills** (slash commands): actions like `/kumo-issue` and `/kumo-pr` for reporting bugs and contributing fixes
+
+**Install the context**
+
+`🖥 Terminal`
+
+``` bash
+cd your-project
+git clone https://github.com/kumo-ai/kumo-coding-agent.git kumo-coding-agent
+```
+
+This action adds a directory named `kumo-coding-agent` to your project. It contains the Kumo Coding Agent's knowledge base. Confirm that this directory appears in your project.
+
+Codex reads `AGENTS.md` automatically. No extra configuration is required.
+
+**Install the skills (optional)** inside a Codex session:
+
+`🤖 Codex`
+
+``` text
+$skill-installer install https://github.com/kumo-ai/kumo-coding-agent
+```
+
+**Step 3: Use Codex from VS Code**
+
+Codex works especially well in VS Code when you ask it to edit files in your project instead of isolated notebook cells.
+
+Good requests include:
+
+`🤖 Codex`
+
+``` text
+Create a scripts/run_prediction.py file that loads the local AdventureWorks
+tables, builds a relational graph, and predicts 30-day product demand through
+client.kumorfm(graph).predict().
+```
+
+You can also use Codex to:
+
+  - add or update Python scripts
+  - create `requirements.txt` or `README.md` files
+  - draft PQL queries
+  - help debug terminal errors from your local environment
+
+<Info>
+The integrated terminal is still where you run Python scripts and other shell commands. Codex helps generate and edit the files, but you remain in control of executing the workflow locally.
+</Info>
+**Step 4 (Optional): Upgrade**
+
+**Upgrade the KumoRFM SDK**
+
+`🖥 Terminal`
+
+``` bash
+pip install --upgrade "nvidia-sdfm[kumorfm]"
+```
+
+**Upgrade the Kumo Coding Agent**
+
+`🖥 Terminal`
+
+``` bash
+cd kumo-coding-agent && git pull
+```
+
+</Tab>
+<Tab title="Flow B - Anthropic Claude Code">
+
+**Step 1: Install the VS Code Extension**
+
+1.  Open VS Code Extensions (`Cmd + Shift + X`)
+2.  Search for **"Claude Code"** (by Anthropic)
+3.  Install the extension
+
+**Authenticate:**
+
+  - Sign in with your Anthropic account when prompted
+
+**Open Claude Code using either:**
+
+  - the Anthropic spark icon in the sidebar
+  - the Anthropic spark icon in the top-right corner
+  - `Cmd + Shift + P` -\> `Claude Code: Open`
+
+<Tip>
+Reload VS Code if the extension does not appear immediately.
+</Tip>
+**Step 2: Install the Kumo Coding Agent**
+
+The Kumo Coding Agent has two parts:
+
+  - **Context** (knowledge base): documentation, PQL rules, workflow guides, and connector references that teach the agent how to use the Kumo platform
+  - **Skills** (slash commands): optional helpers installed with `npx skills add`
+
+**Install the context**
+
+`🖥 Terminal`
+
+``` bash
+cd your-project
+git clone https://github.com/kumo-ai/kumo-coding-agent.git kumo-coding-agent
+echo 'Also read kumo-coding-agent/CLAUDE.md for Kumo agent capabilities.' >> CLAUDE.md
+```
+
+This action adds a directory named `kumo-coding-agent` to your project. It contains the Kumo Coding Agent's knowledge base. Confirm that this directory appears in your project.
+
+The second line tells Claude Code to read the agent's knowledge base when it starts.
+
+**Install the skills (optional)**
+
+To run the following command, you need Node.js installed on your system:
+
+`🖥 Terminal`
+
+``` bash
+npx skills add kumo-ai/kumo-coding-agent --agent claude-code
+```
+
+**Step 3: Use Claude Code from VS Code**
+
+Claude Code works best in VS Code when you ask it to reason over the full project, including scripts, prompts, config files, and output files.
+
+Good requests include:
+
+`✨ Claude`
+
+``` text
+Add a scripts/run_prediction.py example that authenticates with Kumo,
+loads a local dataset, defines a graph, and runs a simple predictive query.
+```
+
+You can also use Claude Code to:
+
+  - draft end-to-end example scripts
+  - explain KumoRFM errors from terminal output
+  - propose cleaner project structure
+  - help turn an ad hoc experiment into reusable Python code
+
+<Info>
+Claude Code can update your project files, but you should still run the scripts yourself from the integrated terminal so you can confirm the local environment and outputs are correct.
+</Info>
+**Step 4 (Optional): Upgrade**
+
+**Upgrade the KumoRFM SDK**
+
+`🖥 Terminal`
+
+``` bash
+pip install --upgrade "nvidia-sdfm[kumorfm]"
+```
+
+**Upgrade the Kumo Coding Agent**
+
+`🖥 Terminal`
+
+``` bash
+cd kumo-coding-agent && git pull
+```
+
+</Tab>
+</Tabs>
+
+### Step 4: Verify the Setup
+
+Create a minimal script such as `scripts/run_prediction.py`:
+
+``` python
+import os
+from nvidia_sdfm import SDFMClient
+
+url = os.environ.get("KUMORFM_NIM_URL", "http://localhost:8000")
+api_key = os.environ.get("NVIDIA_API_KEY")
+
+with SDFMClient(url=url, api_key=api_key) as client:
+    if not client.health_ready():
+        raise RuntimeError(f"KumoRFM NIM is not ready at {url}")
+    print("KumoRFM NIM is ready")
+```
+
+Run it:
+
+`🖥 Terminal`
+
+``` bash
+python scripts/run_prediction.py
+```
+
+## Run Your First Example
+
+Once the SDK and coding agent are set up, ask the agent to help you scaffold a simple project-based workflow.
+
+Examples:
+
+  - create a `kumorfm.Graph` from local data files
+  - draft a first predictive query in Python
+  - create a reusable script instead of a one-off notebook
+  - add logging, comments, and lightweight validation
+
+If you prefer to start from a guided SDK example first, continue with:
+
+  - [SDK Getting Started](/rfm/sdk-getting-started)
+  - [Coding Agent Quick Start](/rfm/coding-agent-quick-start)
+## Troubleshooting
+
+### VS Code cannot find the interpreter
+
+  - Re-run `Python: Select Interpreter`
+  - Make sure `.venv` exists in the project folder
+  - Restart VS Code after creating the environment
+
+### The SDK will not import
+
+`🖥 Terminal`
+
+``` bash
+source .venv/bin/activate
+pip install "nvidia-sdfm[kumorfm]"
+```
+
+Then rerun your script.
+
+### The NIM connection fails
+
+Confirm the endpoint URL and, when required, the gateway API key:
+
+`🖥 Terminal`
+
+``` bash
+export KUMORFM_NIM_URL="https://your-kumorfm-endpoint.example.com"
+export NVIDIA_API_KEY="YOUR_GATEWAY_API_KEY"
+```
+
+Then rerun:
+
+``` bash
+python scripts/run_prediction.py
+```
+
+### The coding agent edited files, but the workflow still fails
+
+  - Re-run the script from the integrated terminal
+  - Check that the active terminal is using `.venv`
+  - Review the modified files before rerunning commands
+  - Ask the agent to fix the error using the exact terminal output
+
+## Next Steps
+
+  - [Setup](/rfm/sdk-getting-started) for SDK fundamentals
+  - [Make Predictions](/rfm/make-predictions) for PQL query reference
+  - [Kumo Coding Agent](https://github.com/kumo-ai/kumo-coding-agent) for agent source and skills

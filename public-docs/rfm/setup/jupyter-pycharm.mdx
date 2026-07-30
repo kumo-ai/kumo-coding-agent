@@ -1,0 +1,63 @@
+---
+title: "Jupyter in PyCharm"
+description: "Set up a PyCharm notebook environment for the NVIDIA SDFM SDK and KumoRFM"
+slug: "rfm/setup/jupyter-pycharm"
+icon: "laptop-code"
+---
+
+Use this guide to configure a project interpreter, select it as a Jupyter kernel, and verify a KumoRFM NIM connection from PyCharm.
+
+## Prerequisites
+
+- Python 3.10 or later
+- A PyCharm edition with Jupyter notebook support
+- The URL of a running KumoRFM NIM
+
+## Create the project environment
+
+1. Open **Settings** (Windows/Linux) or **Preferences** (macOS).
+2. Open **Project > Python Interpreter**.
+3. Select **Add Interpreter > Add Local Interpreter**.
+4. Create a virtual environment named `.venv` using Python 3.10 or later.
+
+Open the PyCharm terminal and install the SDK:
+
+```bash
+python -m pip install --upgrade pip
+python -m pip install "nvidia-sdfm[kumorfm]" ipykernel
+```
+
+## Select the notebook kernel
+
+Create or open an `.ipynb` file. In the notebook toolbar, select the kernel backed by the project's `.venv` interpreter.
+
+Confirm the interpreter in a cell:
+
+```python
+import sys
+print(sys.executable)
+```
+
+The path should point to the `.venv` created for this project.
+
+## Verify the SDK and endpoint
+
+```python
+from nvidia_sdfm import SDFMClient, kumorfm
+
+print(kumorfm.Graph)
+
+with SDFMClient(url="http://localhost:8000") as client:
+    print(client.health_ready())
+    print(client.capabilities("kumo-rfm"))
+```
+
+Pass `api_key` only when an authenticating gateway protects the endpoint. Use HTTPS for authenticated remote deployments.
+
+## Troubleshooting
+
+- **The package installs but the import fails**: confirm that the notebook kernel and project interpreter both use `.venv`, then restart the kernel.
+- **Readiness check fails**: verify the endpoint URL, network route, TLS certificate, and gateway credentials.
+- **The kernel is missing**: reopen the notebook after installing `ipykernel`, or restart PyCharm so it refreshes available interpreters.
+
+Continue with the [KumoRFM quickstart](/quick-start/rfm). For agent-assisted query authoring, use the separate [Kumo Coding Agent guide](/rfm/coding-agent-quick-start).

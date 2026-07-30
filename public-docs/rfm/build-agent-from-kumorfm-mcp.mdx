@@ -1,0 +1,418 @@
+---
+title: "Agent: Sales Lead Scoring"
+description: "Build an end-to-end Sales Lead Scoring Agent using KumoRFM MCP and OpenAI Agents"
+slug: "rfm/build-agent-from-kumorfm-mcp"
+icon: "robot"
+---
+
+This guide walks through building an end-to-end Sales Lead Scoring Agent using KumoRFM MCP, integrated with [OpenAI Agents](https://openai.github.io/openai-agents-python/) via the Model Context Protocol (MCP).
+
+<Info>
+  It’s designed to be read, executed, and extended — all within 10 minutes.
+</Info>
+
+## Introduction — What We’re Building
+
+The **Sales Lead Scoring Agent** automates the process of identifying and ranking new leads so sales teams can focus on those most likely to convert. It combines **KumoRFM’s predictive intelligence** with **OpenAI’s agentic orchestration**, producing a daily, data-driven prioritization that tells Sales Development Representatives (SDRs) exactly **who to contact first**.
+
+Every day, the agent:
+
+- Loads the latest lead data from your CRM or CSV source
+- Uses **KumoRFM** (_Kumo Relational Foundation Model_) to infer conversion likelihoods — no training required
+- Categorizes leads into **HIGH**, **MEDIUM**, and **LOW** priority tiers
+- Summarizes key drivers behind each prediction so SDRs know _why_ each lead ranks where it does
+
+By using **KumoRFM MCP**, the agent communicates directly with a local or remote KumoRFM server through standardized MCP APIs — enabling predictive queries, graph exploration, and explainable insights without extra setup.\
+This integration allows **OpenAI Agents** to reason over multi-table business data, invoke KumoRFM tools dynamically, and turn raw relational data into actionable daily insights — **seamlessly, reproducibly, and at scale.**
+
+<Info>
+  Behind the scenes, this walkthrough uses the `kumo-rfm-mcp` server — a Python MCP server that exposes KumoRFM tools (e.g., `predict`, `evaluate`) for various agentic frameworks, including OpenAI, CrewAI, and LangGraph.  Please see [KumoRFM MCP Server](https://pypi.org/project/kumo-rfm-mcp) for more details.
+</Info>
+
+## System Overview
+
+### Architecture Components
+
+The Sales Lead Scoring Agent consists of four key components working together through the **Model Context Protocol (MCP)**:
+
+- **🧠 Agent (GPT-5)** — The central reasoning engine.\
+  It plans actions, interprets instructions, and dynamically invokes MCP tools (e.g., `predict`, `lookup_table_rows`) to analyze and rank sales leads.
+- **⚙️ Runner** — The execution harness.\
+  It initializes the Agent, maintains the session state, and most importantly, **loads lead data** from an external source such as S3 or a CRM database. The Runner passes this data into the MCP environment so KumoRFM can interpret it as part of a relational feature graph.
+- **🔌 KumoRFM MCP Server** — The integration bridge.\
+  It exposes the KumoRFM model as a standardized **MCP toolset** that can be called by any AI agent.\
+  Each tool is strongly typed, authenticated, and schema-aware — handling data loading, graph construction, and model inference.
+- **🧮 KumoRFM Model** — The predictive reasoning engine.\
+  A pre-trained **Relational Foundation Model (RFM)** that performs zero-training inference over multi-table data.\
+  Through the MCP interface, it executes predictive queries, evaluates results, and provides explainability — all without custom model training.
+
+### End-to-End Flow
+
+Each daily run of the Sales Lead Scoring Agent needs to follow these key steps:
+
+1. **Initialize the Agent** — Runner launches the Agent and connects it securely to data sources and the KumoRFM MCP Server.
+2. **Fetch Latest Data** — Load new or updated leads from CRM or S3 for scoring.
+3. **Inspect Data** — Preview schema and structure using `inspect_table_files` to understand available features.
+4. **Build Graph** — Use `update_graph_metadata` and `materialize_graph` to form a relational feature graph.
+5. **Predict** — Execute a `predict` query to estimate conversion likelihoods — no model training required.
+6. **Enrich Results** — Retrieve key details for top leads via `lookup_table_rows`.
+7. **Rank & Summarize** — Categorize leads into priority tiers and provide short explanations.
+8. **Log & Automate** — Record outputs and repeat the process automatically for continuous insights.
+
+<Info>
+  **KumoRFM tools used in this agent:**
+
+  - `inspect_table_files` — Analyze the structure and preview rows of tabular data.
+  - `update_graph_metadata` — Define or refresh the relationships among tables.
+  - `materialize_graph` — Assemble the relational feature graph for inference.
+  - `predict` — Run predictive queries to generate conversion likelihoods.
+  - `lookup_table_rows` — Retrieve detailed records for selected entities or leads.
+
+  Together, these tools allow the Agent to explore tables, build a graph, run predictions, and deliver enriched, prioritized results — all without custom training.
+</Info>
+
+## Data & Problem Definition
+
+In this example, we work with the **Lead Scoring Dataset**, publicly available at:\
+`s3://kumo-sdk-public/rfm-datasets/lead_scoring/lead_scoring.csv`
+
+This dataset contains about **8,000 historical leads** — both converted and unconverted — and serves as the foundation for our sales prioritization model.\
+It is composed of a **single table** with the following key columns:
+
+| Column                              | Description                                      |
+| ----------------------------------- | ------------------------------------------------ |
+| `lead_id`                           | Unique identifier for each lead                  |
+| `contact_date`                      | Date of first contact                            |
+| `converted`                         | Binary target (1 = converted, 0 = not converted) |
+| `source`, `region`, `industry`, ... | Lead attributes describing each lead             |
+
+Our **agent** uses this historical data to help the sales team reach out to prospects in an optimal way — learning from the past behavior of successful conversions.
+
+### What We’re Predicting
+
+Our goal is to **predict which new leads (added yesterday)** are most likely to convert (`converted = 1`).\
+This enables the sales or marketing team to **focus efforts on the highest-potential leads**, automatically and intelligently.
+
+As part of our **daily team sync**, the sales agent will:
+
+1. Take the **leads submitted yesterday** (one day before `MEETING_DAY`).
+2. Generate a **ranked list** of leads based on their likelihood to convert.
+3. Present this prioritized list to the team — helping guide outreach efforts efficiently.
+
+## Setup
+
+### Prerequisites
+
+- **Python environment:** Create a new environment using `uv` or `pip` with **Python ≥ 3.10**
+- **KumoRFM API key:** Use the API key provided for your KumoRFM environment and set it as\
+  `export KUMO_API_KEY=<your_api_key>`
+- **OpenAI API key:** Obtain from https://platform.openai.com/api-keys and set it as\
+  `export OPENAI_API_KEY=<your_openai_api_key>`
+- **Internet access:** Required for MCP to communicate with KumoRFM services
+
+Once these are ready, everything else in this walkthrough can be **copy-and-paste runnable**.
+
+## Install and Import Required Libraries
+
+Before running the example agent notebook, install the following dependencies:
+
+```bash
+pip install kumo-rfm-mcp openai-agents==0.2.9 fsspec s3fs pandas
+```
+
+- **`kumo-rfm-mcp`** — Provides the KumoRFM MCP server and tools to interact with relational graph data.
+- **`openai-agents`** — Framework for building and running agent workflows.
+- **`fsspec`** and **`s3fs`** — Enable file system access (e.g., loading data from S3).
+- **`pandas`** — Required for tabular data handling.
+
+Once all the required libraries are installed, we start implementing with importing the following libraries:
+
+```python
+# Import required libraries
+import asyncio
+import os
+from datetime import datetime, timedelta
+from typing import List
+
+from agents import Agent, Runner, gen_trace_id, trace
+from agents.mcp import MCPServer, MCPServerStdio
+import pandas as pd
+
+```
+
+## Data Loading: Getting Yesterday’s Leads
+
+Now, let’s define a helper function to **load the lead data from S3** and extract the **lead IDs from the day before the meeting date**.\
+This ensures the agent only scores the most recent leads for prioritization.
+
+```python
+import pandas as pd
+from datetime import datetime, timedelta
+from typing import List
+
+def get_leads_from_previous_day(meeting_date: str, data_source: str) -> List[int]:
+    """
+    Get lead IDs from the day before the meeting date.
+
+    Args:
+        meeting_date: Format "YYYY-MM-DD" (e.g., "2025-06-02")
+        data_source: Data source URL (e.g., S3 path)
+    Returns:
+        List of lead IDs from the previous day
+    """
+    # Get leads data from data source
+    leads_data = pd.read_csv(data_source)
+
+    # Parse meeting date
+    meeting_dt = datetime.strptime(meeting_date, "%Y-%m-%d")
+    previous_day = meeting_dt - timedelta(days=1)
+
+    print(f"📅 Meeting date: {meeting_date}")
+    print(f"🔍 Looking for leads from previous day: {previous_day.strftime('%Y-%m-%d')}")
+
+    # Parse contact date
+    leads_data['contact_date'] = pd.to_datetime(leads_data['contact_date'])
+
+    # Filter by previous day
+    filtered_leads = leads_data[
+        leads_data['contact_date'].dt.date == previous_day.date()
+    ]
+
+    # Extract lead IDs
+    previous_day_leads = filtered_leads['lead_id'].tolist()
+
+    print(f"📊 Found {len(previous_day_leads)} leads from previous day: {previous_day_leads}")
+    return previous_day_leads
+```
+
+In short, the above code works:
+
+1. Loads the dataset directly from **S3** using `fsspec` and `pandas`.
+2. Parses the **`contact_date`** column into a proper datetime format.
+3. Filters the dataset to include only leads from **`one day before the given MEETING_DAY`**.
+4. Returns a clean list of lead IDs ready to be passed to the agent for prediction.
+
+> This function keeps the pipeline **dynamic** — just update `MEETING_DAY`, and it will automatically fetch the latest leads for scoring.
+
+Let’s test the `get_leads_from_previous_day()` function with a real example from our S3 dataset.
+
+```python
+# Test the function
+DATA_SOURCE = "s3://kumo-sdk-public/rfm-datasets/lead_scoring/lead_scoring.csv"
+MEETING_DATE = "2025-05-31"  # Demo date - in practice this would be today's date
+
+test_leads = get_leads_from_previous_day(MEETING_DATE, DATA_SOURCE)
+```
+
+**Output**
+
+```
+📅 Meeting date: 2025-05-31
+🔍 Looking for leads from previous day: 2025-05-30
+📊 Found 30 leads from previous day: [42, 322, 495, 834, 954, 1370, 1376, 1524, 2141, 2202, 2236, 2255, 2838, 2882, 2991, 3167, 3912, 3928, 4336, 4891, 5301, 5693, 5709, 5779, 5866, 6022, 6052, 6377, 6869, 7213]
+```
+
+## Build the Sales Agent
+
+Now that we’ve prepared our dataset and helper functions, we’re ready to **create the agent function**.\
+The **OpenAI Agents SDK** makes this process simple and modular — allowing us to combine reasoning, data access, and predictive intelligence in just a few lines of code.
+
+Here’s what we’ll do next:
+
+1. **`Define lead_scoring_agent`** — an `Agent` object initialized with the system prompt and connected to KumoRFM MCP tools.
+2. **Fetch the target leads** using our `get_leads_from_previous_day()` helper function.
+3. **Compose the request (prompt)** for the agent to run predictions and prioritize the leads.
+4. **Execute the agent** using:
+
+```python
+result = await Runner.run(starting_agent=lead_scoring_agent, input=request)
+```
+
+### Lead Scoring Agent
+
+The **Lead Scoring Agent** is a specialized sub-agent responsible for predicting which leads are most likely to convert.\
+It works as part of the daily automation pipeline — taking yesterday’s leads, running predictions with **KumoRFM**, and delivering a prioritized outreach list for the sales development team.
+
+The following **Agent Prompt** defines the role, goals, and workflow of our AI sales assistant.\
+It tells the model _how to think and act_ — from connecting to KumoRFM, running predictions, and generating ranked outreach lists for SDRs.
+
+In this scenario, the agent will:
+
+- Use the **Lead Scoring dataset** hosted on S3
+- Run **KumoRFM predictive queries** to estimate conversion probabilities
+- Rank leads into **priority tiers** (High, Medium, Low)
+- Return a clean, actionable list for the daily sales meeting
+
+Below is the full prompt string assigned to the variable `LEAD_SCORING_AGENT_PROMPT`.
+
+```python
+LEAD_SCORING_AGENT_PROMPT = """
+You are a lead scoring agent for the daily sales team meeting. Your task is to:
+
+1. Set up the KumoRFM model with the S3 lead scoring data
+2. Make predictions for the provided lead IDs from yesterday
+3. Create a prioritized outreach list for SDRs
+4. Provide actionable insights
+
+Workflow:
+- inspect_table_files: s3://kumo-sdk-public/rfm-datasets/lead_scoring/lead_scoring.csv
+- update_graph_metadata: Register table as "leads", set primary key to lead_id
+- materialize_graph: Assemble graph for predictions
+- predict: Use query "PREDICT leads.converted=1 FOR leads.lead_id IN (<lead_ids>)"
+- lookup_table_rows: Get lead details for the high-priority leads
+
+Output format:
+🚀 HIGH PRIORITY (>15% conversion probability)
+🔥 MEDIUM PRIORITY (10-15% conversion probability)
+⏳ LOW PRIORITY (<10% conversion probability)
+
+For each lead, show: ID, probability, business segment, origin, lead type
+Focus on actionable SDR guidance.
+""".strip()
+```
+
+### Sales Agent Function
+
+The following function ties everything together — it initializes the **Lead Scoring Agent**, retrieves the latest leads, builds the prompt, and runs the prediction workflow end to end.\
+It serves as the main entry point that the **Sales Agent** uses during each daily sync to generate actionable insights for the team.
+
+```python
+async def run_daily_sales_agent(mcp_server: MCPServer):
+    """
+    Run the daily lead scoring agent demo
+    """
+    # Daily Lead Scoring Agent
+    lead_scoring_agent = Agent(
+        name="Daily Lead Scoring Agent",
+        model="gpt-5",
+        instructions=LEAD_SCORING_AGENT_PROMPT,
+        mcp_servers=[mcp_server],
+    )
+
+    # Get leads from previous day
+    previous_day_leads = get_leads_from_previous_day(MEETING_DATE, DATA_SOURCE)
+
+    if not previous_day_leads:
+        print("❌ No leads found from previous day")
+        return
+
+    # Create the daily sales meeting request
+    lead_ids_str = ",".join(map(str, previous_day_leads))
+    request = f"""
+    📋 DAILY SALES TEAM MEETING - {MEETING_DATE}
+
+    We need to prioritize outreach for {len(previous_day_leads)} leads that came in yesterday.
+
+    Lead IDs to score: {lead_ids_str}
+
+    Please:
+    1. Set up the lead scoring model
+    2. Score these leads for conversion probability
+    3. Create a prioritized outreach list for our SDRs
+    4. Provide insights on which leads to focus on first
+
+    Data source: {DATA_SOURCE}
+    """
+
+    print("🎯 Daily Lead Scoring Meeting")
+    print("=" * 50)
+    print(f"Request: {request.strip()}")
+    print("-" * 50)
+
+    # Run the agent
+    result = await Runner.run(starting_agent=lead_scoring_agent, input=request, max_turns=20)
+    print("\n📊 SDR Prioritization Results:")
+    print(result.final_output)
+
+    return result
+```
+
+## Integrating KumoRFM via MCP
+
+The only remaining thing to do is initialize the KumoRFM MCP and provide it to the agent! We can do so with:
+
+```python
+server = MCPServerStdio(
+    name="kumo_rfm",
+    args=["-m", "kumo_rfm_mcp.server"],
+    env={"KUMO_API_KEY": os.environ["KUMO_API_KEY"]},
+)
+```
+
+OpenAI agents SDK also provides a tracing tool which is very useful for inspecting and debugging agentic runs, so we can complete the following main function to run:
+
+```python
+async def main():
+    """
+    Main demo function - connects to MCP server and runs the agent
+    """
+    print("🔌 Connecting to KumoRFM MCP Server...")
+
+    async with MCPServerStdio(
+        name="KumoRFM Server",
+        params={
+            "command": "python",
+            "args": ["-m", "kumo_rfm_mcp.server"],
+            "env": {
+                "KUMO_API_KEY": os.getenv("KUMO_API_KEY"),
+            }
+        },
+    ) as server:
+        trace_id = gen_trace_id()
+        with trace(workflow_name="Daily Lead Scoring Meeting", trace_id=trace_id):
+            print(f"📊 View trace: https://platform.openai.com/traces/trace?trace_id={trace_id}\n")
+            print("✅ MCP Server connected successfully!")
+            print("🤖 Running Daily Lead Scoring Agent...\n")
+
+            # Run the demo
+            result = await run_daily_sales_agent(server)
+
+            print("\n" + "="*60)
+            print("🎉 DONE TODAY!")
+            print("="*60)
+            return result
+```
+
+If you run this `main()`, then the following outcomes can be shown:
+
+<Accordion title="Output" icon="sparkles">
+  ```
+   book slot.
+    - Organic_search: Educational angle—send 1-pager/case study in their segment, then propose a focused demo.
+    - Referral: Ask who referred; leverage social proof to secure meeting (“we work with X; similar outcomes for you”).
+
+  - Tailor by lead_type
+    - Industry: Treat as multi-stakeholder—ask about decision process and procurement; share security and pricing overview; propose 30‑min discovery.
+    - Offline: Phone-first; verify best number; offer to walk through options live.
+    - Online_beginner: Provide simple onboarding path and “quick win” use case; offer starter plan.
+    - Online_big/top: Emphasize scale, SLAs, and ROI; propose a customized demo.
+
+  - Segment-specific talk tracks you can reuse today
+    - Household_utilities (834, 2991, 1524, 6377): Reliability/cost savings; reference bulk usage and uptime.
+    - Computers (7213, 6052, 1376): Performance and integration; highlight API/compatibility.
+    - Car_accessories (2838, 42, 2141, 4891, 5693, 954): Quick wins; offer catalog/fitment guidance and fast setup.
+    - Health_beauty (5779, 2202, 1370): Compliance and brand; share case study results with conversion lifts.
+
+  Suggested cadence
+  - Today: Call all High and top 5 Mediums (6869, 7213, 5709, 3167, 6052). Email remaining Mediums with a clear CTA and book follow-up calls.
+  - Next 48 hours: Follow-up call attempts for Mediums; add remaining Lows to a 3‑step nurture (value email → case study → light CTA). Only call Lows with direct_traffic or display if time permits.
+
+  Notes
+  - 6869 rounds to 15.0% but is just under the high threshold; treat as near‑high priority.
+  - Materialized with anchor time 2025-05-31 to avoid future leakage. Model context used 5,000 examples with 10.7% positive base rate.
+
+  ============================================================
+  🎉 DONE TODAY!
+  ============================================================
+  ```
+</Accordion>
+
+<Info>
+  For the full end-to-end code, please see the [notebook example](https://github.com/kumo-ai/kumo-rfm/blob/master/notebooks/simple_sales_agent.ipynb)
+</Info>
+
+## We'd love to hear from you! ❤️
+
+Found a bug or have a feature request? Submit issues directly on GitHub. Your feedback helps us improve RFM for everyone.
+
+Built something cool with RFM? We'd love to see it! Share your project on LinkedIn and tag `@kumo`. We regularly spotlight on our official channels—yours could be next!

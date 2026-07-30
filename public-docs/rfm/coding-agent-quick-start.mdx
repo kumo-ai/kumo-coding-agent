@@ -1,0 +1,151 @@
+---
+title: "Quickstart: Kumo Coding Agent"
+description: "Use coding agents like Claude Code and Codex to iterate on KumoRFM predictions"
+slug: "rfm/coding-agent-quick-start"
+icon: "rocket-launch"
+---
+
+<CardGroup cols={1}>
+  <Card title="Kumo Coding Agent" icon="github" href="https://github.com/kumo-ai/kumo-coding-agent">
+    Install the agent, context files, and skills from GitHub to get started.
+  </Card>
+</CardGroup>
+
+This guide helps you get started with the [Kumo Coding Agent](https://github.com/kumo-ai/kumo-coding-agent) for KumoRFM Pre-Trained workflows.
+
+Use this page when you already have a project, notebook, or editor environment available and want a short path to productive agent-assisted work.
+
+What this quick start covers:
+
+  - choosing an environment for agent-assisted work
+  - connecting the Kumo Coding Agent to your local project or notebook flow
+  - using Codex or Claude Code for setup help, graph definition, and predictive query authoring
+  - verifying that the agent can work with your KumoSDK project context
+
+Choose your environment:
+
+<CardGroup cols={3}>
+  <Card title="Jupyter in VS Code" icon="book-open" href="/rfm/setup/jupyter-vscode">
+    Notebook workflow in VS Code
+  </Card>
+  <Card title="Jupyter in PyCharm" icon="book-open" href="/rfm/setup/jupyter-pycharm">
+    Notebook workflow in PyCharm
+  </Card>
+  <Card title="VS Code" icon="code" href="/rfm/setup/vscode-kumo-agent">
+    Script and project workflow
+  </Card>
+  <Card title="Cursor" icon="arrow-pointer" href="/rfm/setup/cursor">
+    AI-native editor
+  </Card>
+  <Card title="Codex" icon="robot" href="/rfm/setup/codex">
+    Desktop app or CLI
+  </Card>
+  <Card title="Claude Code" icon="terminal" href="/rfm/setup/claude-code">
+    Desktop app or CLI
+  </Card>
+</CardGroup>
+
+## Try These Prompts
+
+All examples use a sample e-commerce dataset: `s3://kumo-sdk-public/rfm-datasets/online-shopping`
+
+Copy and paste these directly into your coding agent (Claude Code, Codex, or Cursor).
+
+### Explore the Data
+
+Start here. The agent will load the dataset, inspect every table, and summarize what it finds.
+
+``` text
+Load the data from s3://kumo-sdk-public/rfm-datasets/online-shopping and
+tell me what tables are available, how many rows each has, and what the
+columns and types look like.
+```
+
+### Build a Graph
+
+Once you understand the data, ask the agent to build a relational graph.
+
+``` text
+Build a KumoRFM graph from the online-shopping dataset at
+s3://kumo-sdk-public/rfm-datasets/online-shopping. Inspect the schema,
+infer relationships between tables, validate the graph, and visualize it.
+```
+
+### Write a Prediction Query
+
+Ask the agent to write a PQL query for a specific business question.
+
+``` text
+Using the online-shopping graph, write a PQL query that predicts whether
+each customer will make a purchase in the next 14 days.
+```
+
+### Run an End-to-End Prediction
+
+This is the full workflow in one prompt. The agent will load data, build the graph, write PQL, run the prediction, and show results.
+
+``` text
+Run a complete KumoRFM prediction on the online-shopping dataset at
+s3://kumo-sdk-public/rfm-datasets/online-shopping. Predict the total
+spend per customer over the next 30 days. Show me the results and
+evaluate the prediction quality.
+```
+
+### Explain the Results
+
+After running a prediction, ask the agent to explain what drove the results.
+
+``` text
+Pick one customer from the predictions and explain what features were
+most important in driving their predicted spend.
+```
+
+### Try a Different Question
+
+Change the prediction task to explore what else the data can answer.
+
+``` text
+Using the same online-shopping graph, predict which product category
+each customer is most likely to buy from next.
+```
+
+---
+
+## What to Expect
+
+When you run these prompts, the agent will:
+
+1.  **Inspect the data first** before writing any code
+2.  **Build the graph** with correct table names and relationships
+3.  **Write PQL** using real column names from the schema
+4.  **Run the prediction** and show sample output
+5.  **Evaluate** the results with appropriate metrics
+
+If something goes wrong, use the agent to debug and iterate until the prediction runs successfully:
+
+``` text
+The prediction failed. Can you look at the error, fix the issue, and
+re-run it?
+```
+
+``` text
+The evaluation metrics look weak. Can you try a different time window
+or aggregation and compare the results?
+```
+
+``` text
+Can you try a different prediction target on this dataset and see if
+we get better results?
+```
+
+The goal is to keep iterating with the agent until you have a working, high-quality prediction notebook or script.
+
+---
+
+## Next Steps
+
+  - [Kumo Coding Agent on GitHub](https://github.com/kumo-ai/kumo-coding-agent) for agent source, context files, and skills
+  - [Setup](/fine-tuning/installation) for SDK fundamentals
+  - [Make Predictions](/rfm/make-predictions) for PQL query reference
+  - [Prediction Types](/rfm/prediction-types) for supported prediction types
+  - [Environment Setup](/rfm/setup/jupyter-vscode) for detailed editor and notebook setup
