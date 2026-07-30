@@ -1,0 +1,146 @@
+---
+title: "Cursor"
+description: "Use Cursor with the Kumo RFM SDK"
+slug: "rfm/setup/cursor"
+icon: "pen"
+---
+
+<img src="/images/rfm/agent-cursor.svg" alt="Cursor" style={{height: "100px", width: "auto"}} />
+
+## Overview
+
+This guide walks you through setting up the **NVIDIA SDFM SDK** and **Kumo Coding Agent** in **Cursor**. It covers installation, NIM connection configuration, agent setup, and a first prediction example.
+
+## Prerequisites
+
+Make sure you have:
+
+1.  Cursor installed and set up. See the [official Cursor docs](https://cursor.com/en-US/docs) for installation.
+2.  Python **3.10, 3.11, or 3.12** installed
+3.  The endpoint URL of a deployed KumoRFM NIM and, when required, a gateway API key
+
+## Step 1: Create a Project
+
+Create or open a project directory:
+
+``` bash
+mkdir my-kumo-project
+cd my-kumo-project
+```
+
+Open the folder in Cursor: **File \> Open Folder**.
+
+## Step 2: Install the SDK
+
+`🖥 Terminal`
+
+``` bash
+pip install "nvidia-sdfm[kumorfm]"
+```
+
+Verify installation:
+
+``` bash
+python -c "from nvidia_sdfm import SDFMClient, kumorfm; print('NVIDIA SDFM SDK installed')"
+```
+
+## Step 3: Configure the NIM Connection
+
+Set the NIM endpoint. Set an API key only when an authenticating gateway protects the deployment:
+
+`🖥 Terminal`
+
+``` bash
+export KUMORFM_NIM_URL="http://localhost:8000"
+# Optional for an authenticated gateway:
+export NVIDIA_API_KEY="YOUR_GATEWAY_API_KEY"
+```
+
+Pass these values to `SDFMClient`, then run inference through `client.kumorfm(graph).predict(...)`. Do not initialize the underlying KumoRFM engine directly.
+
+## Step 4: Install Kumo Coding Agent
+
+The Kumo Coding Agent has two parts:
+
+  - **Context** (knowledge base): Documentation, PQL rules, workflow guides, and data connector references that teach the agent how to use the Kumo platform. Installed by cloning the repository.
+  - **Skills** (slash commands): Actions like `/kumo-issue` and `/kumo-pr` for reporting bugs and contributing fixes. Installed via `npx skills add`.
+
+**Install the context:**
+
+`🖥 Terminal`
+
+``` bash
+git clone https://github.com/kumo-ai/kumo-coding-agent.git kumo-coding-agent
+```
+
+Cursor reads `.cursor/rules/` automatically. No extra configuration needed.
+
+**Install the skills (optional):**
+
+`🖥 Terminal`
+
+``` bash
+npx skills add kumo-ai/kumo-coding-agent --agent cursor
+```
+
+## Step 5: Use the Kumo Coding Agent
+
+Open the Cursor chat and try a real prediction:
+
+``` text
+Load the local AdventureWorks tables, build a relational graph, and predict
+30-day product demand through client.kumorfm(graph).predict().
+```
+
+The agent will inspect the data, build a graph, write PQL, and run the prediction end-to-end.
+
+## Step 6 (Optional): Upgrade
+
+**Upgrade the SDK:**
+
+`🖥 Terminal`
+
+``` bash
+pip install --upgrade "nvidia-sdfm[kumorfm]"
+```
+
+**Upgrade the Kumo Coding Agent:**
+
+`🖥 Terminal`
+
+``` bash
+cd kumo-coding-agent && git pull
+```
+
+To pin to a specific version:
+
+``` bash
+cd kumo-coding-agent && git checkout v1.0.0
+```
+
+## Troubleshooting
+
+### `nvidia_sdfm` cannot be imported
+
+``` bash
+pip install "nvidia-sdfm[kumorfm]"
+```
+
+### The NIM connection fails
+
+``` bash
+export KUMORFM_NIM_URL="https://your-kumorfm-endpoint.example.com"
+export NVIDIA_API_KEY="YOUR_GATEWAY_API_KEY"
+```
+
+### Agent does not respond with Kumo knowledge
+
+  - Verify `kumo-coding-agent/` exists in your project directory
+  - Verify `kumo-coding-agent/.cursor/rules/` contains `kumo-coding-agent.mdc`
+  - Restart Cursor
+
+## Next Steps
+
+  - [Setup](/rfm/sdk-getting-started) for SDK fundamentals
+  - [Make Predictions](/rfm/make-predictions) for PQL query reference
+  - [Kumo Coding Agent](https://github.com/kumo-ai/kumo-coding-agent) for agent source and skills

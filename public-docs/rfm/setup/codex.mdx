@@ -1,0 +1,166 @@
+---
+title: "Codex"
+description: "Use Codex with the Kumo RFM SDK"
+slug: "rfm/setup/codex"
+icon: "robot"
+---
+
+<img src="/images/rfm/agent-chatgpt.svg" alt="Codex" style={{height: "100px", width: "auto"}} />
+
+## Overview
+
+This guide walks you through setting up the **NVIDIA SDFM SDK** and **Kumo Coding Agent** with **OpenAI Codex** in desktop and CLI environments.
+
+Codex is an AI coding agent by OpenAI. It can read your project files, write code, run commands, and iterate on errors. You interact with it by typing natural language prompts.
+
+## Prerequisites
+
+Make sure you have:
+
+1.  Python **3.10, 3.11, or 3.12** installed
+2.  The endpoint URL of a deployed KumoRFM NIM and, when required, a gateway API key
+3.  An OpenAI account (ChatGPT or API)
+4.  Codex installed and authenticated. See the [official Codex docs](https://developers.openai.com/codex) for desktop app and CLI installation.
+
+## Step 1: Create a Project
+
+Create or open a project directory:
+
+``` bash
+mkdir my-kumo-project
+cd my-kumo-project
+```
+
+**Desktop app:** Open Codex and select your project folder.
+
+**CLI:** Navigate to your project in the terminal.
+
+## Step 2: Install the SDK
+
+``` bash
+pip install "nvidia-sdfm[kumorfm]"
+```
+
+Verify:
+
+``` bash
+python -c "from nvidia_sdfm import SDFMClient, kumorfm; print('NVIDIA SDFM SDK installed')"
+```
+
+## Step 3: Configure the NIM Connection
+
+Set the NIM endpoint. Set an API key only when an authenticating gateway protects the deployment:
+
+``` bash
+export KUMORFM_NIM_URL="http://localhost:8000"
+# Optional for an authenticated gateway:
+export NVIDIA_API_KEY="YOUR_GATEWAY_API_KEY"
+```
+
+Pass these values to `SDFMClient`, then run inference through `client.kumorfm(graph).predict(...)`. Do not initialize the underlying KumoRFM engine directly.
+
+## Step 4: Install Kumo Coding Agent
+
+The Kumo Coding Agent has two parts:
+
+  - **Context** (knowledge base): Documentation, PQL rules, workflow guides, and data connector references that teach the agent how to use the Kumo platform. Installed by cloning the repository.
+  - **Skills** (slash commands): Actions like `/kumo-issue` and `/kumo-pr` for reporting bugs and contributing fixes. Installed via the skill installer.
+
+**Install the context:**
+
+``` bash
+git clone https://github.com/kumo-ai/kumo-coding-agent.git kumo-coding-agent
+echo 'Also read kumo-coding-agent/CLAUDE.md for Kumo agent capabilities.' >> AGENTS.md
+```
+
+The second line adds the agent to your project's `AGENTS.md`, which Codex reads automatically on startup.
+
+**Install the skills (optional).**
+
+Open a Codex session (see Step 5) and type:
+
+``` text
+$skill-installer install https://github.com/kumo-ai/kumo-coding-agent
+```
+
+## Step 5: Use the Kumo Coding Agent
+
+**Desktop app:**
+
+1.  Open the Codex desktop app
+2.  Select your project folder
+3.  Type a prompt in the chat panel at the bottom:
+
+``` text
+Load the local AdventureWorks tables, build a relational graph, and predict
+30-day product demand through client.kumorfm(graph).predict().
+```
+
+4.  Codex will read the Kumo Coding Agent context, inspect the data, build a graph, write PQL, and run the prediction.
+5.  Review the changes Codex proposes and approve them.
+
+**CLI:**
+
+Run a prompt directly from the terminal:
+
+``` bash
+codex "Use local AdventureWorks tables to predict 30-day product demand with client.kumorfm(graph).predict()."
+```
+
+Codex will generate files, run code, and output results in the terminal.
+
+<Info>
+Codex runs headless in CLI mode. Provide the full prompt upfront. For multi-step workflows, run Codex multiple times or use the desktop app for interactive sessions.
+</Info>
+## Step 6 (Optional): Upgrade
+
+**Upgrade the SDK:**
+
+``` bash
+pip install --upgrade "nvidia-sdfm[kumorfm]"
+```
+
+**Upgrade the Kumo Coding Agent:**
+
+``` bash
+cd kumo-coding-agent && git pull
+```
+
+To pin to a specific version:
+
+``` bash
+cd kumo-coding-agent && git checkout v1.0.0
+```
+
+## Troubleshooting
+
+### `nvidia_sdfm` cannot be imported
+
+``` bash
+pip install "nvidia-sdfm[kumorfm]"
+```
+
+### The NIM connection fails
+
+``` bash
+export KUMORFM_NIM_URL="https://your-kumorfm-endpoint.example.com"
+export NVIDIA_API_KEY="YOUR_GATEWAY_API_KEY"
+```
+
+### Agent does not respond with Kumo knowledge
+
+  - Verify `kumo-coding-agent/` exists in your project directory
+  - Verify your project's `AGENTS.md` contains the line referencing `kumo-coding-agent/CLAUDE.md`
+  - Restart Codex or open a new session
+
+### Codex CLI not found
+
+``` bash
+npm install -g @openai/codex
+```
+
+## Next Steps
+
+  - [Setup](/rfm/sdk-getting-started) for SDK fundamentals
+  - [Make Predictions](/rfm/make-predictions) for PQL query reference
+  - [Kumo Coding Agent](https://github.com/kumo-ai/kumo-coding-agent) for agent source and skills

@@ -1,0 +1,79 @@
+---
+title: "Jupyter in VS Code"
+description: "Set up a VS Code notebook environment for the NVIDIA SDFM SDK and KumoRFM"
+slug: "rfm/setup/jupyter-vscode"
+icon: "laptop-code"
+---
+
+Use this guide to create a Python environment, select it as a Jupyter kernel, and verify a KumoRFM NIM connection from VS Code.
+
+## Prerequisites
+
+- Python 3.10 or later
+- [Visual Studio Code](https://code.visualstudio.com/)
+- The Microsoft Python and Jupyter extensions
+- The URL of a running KumoRFM NIM
+
+## Create an environment
+
+Open the VS Code terminal in your project folder and create a virtual environment:
+
+```bash
+python3 -m venv .venv
+```
+
+Activate it:
+
+<CodeGroup>
+```bash macOS/Linux
+source .venv/bin/activate
+```
+
+```powershell Windows
+.venv\Scripts\Activate.ps1
+```
+</CodeGroup>
+
+Install the SDK and notebook kernel:
+
+```bash
+python -m pip install --upgrade pip
+python -m pip install "nvidia-sdfm[kumorfm]" ipykernel
+```
+
+## Select the notebook kernel
+
+1. Create or open an `.ipynb` file.
+2. Select **Kernel** in the upper-right corner.
+3. Choose **Python Environments**, then select the `.venv` interpreter.
+
+In a notebook cell, confirm that the kernel uses the expected interpreter:
+
+```python
+import sys
+print(sys.executable)
+```
+
+The path should end in `.venv/bin/python` on macOS/Linux or `.venv\Scripts\python.exe` on Windows.
+
+## Verify the SDK and endpoint
+
+```python
+from nvidia_sdfm import SDFMClient, kumorfm
+
+print(kumorfm.Graph)
+
+with SDFMClient(url="http://localhost:8000") as client:
+    print(client.health_ready())
+    print(client.capabilities("kumo-rfm"))
+```
+
+Pass `api_key` only when an authenticating gateway protects the endpoint. Use HTTPS for authenticated remote deployments.
+
+## Troubleshooting
+
+- **`ModuleNotFoundError: nvidia_sdfm`**: reselect the `.venv` kernel, restart it, and rerun the install cell.
+- **Readiness check fails**: verify the endpoint URL, network route, TLS certificate, and gateway credentials.
+- **Wrong interpreter**: run `Python: Select Interpreter` from the Command Palette and choose `.venv`, then select the same notebook kernel.
+
+Continue with the [KumoRFM quickstart](/quick-start/rfm). For agent-assisted query authoring, use the separate [Kumo Coding Agent guide](/rfm/coding-agent-quick-start).

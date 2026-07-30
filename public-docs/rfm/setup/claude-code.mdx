@@ -1,0 +1,173 @@
+---
+title: "Claude Code"
+description: "Use Claude Code with the Kumo RFM SDK"
+slug: "rfm/setup/claude-code"
+icon: "terminal"
+---
+
+<img src="/images/rfm/agent-claude.svg" alt="Claude" style={{height: "100px", width: "auto"}} />
+
+## Overview
+
+This guide walks you through setting up the **NVIDIA SDFM SDK** and **Kumo Coding Agent** with **Anthropic Claude Code** in desktop and CLI environments.
+
+Claude Code is an AI coding agent by Anthropic. It can read your project files, write code, run commands, and iterate on errors. You interact with it by typing natural language prompts.
+
+## Prerequisites
+
+Make sure you have:
+
+1.  Python **3.10, 3.11, or 3.12** installed
+2.  The endpoint URL of a deployed KumoRFM NIM and, when required, a gateway API key
+3.  An Anthropic account
+4.  Claude Code installed and authenticated. See the [official Claude Code docs](https://code.claude.com/docs/en/overview) for desktop app and CLI installation.
+
+## Step 1: Create a Project
+
+Create or open a project directory:
+
+``` bash
+mkdir my-kumo-project
+cd my-kumo-project
+```
+
+**Desktop app:** Open Claude Code and select your project folder.
+
+**CLI:** Navigate to your project in the terminal.
+
+## Step 2: Install the SDK
+
+``` bash
+pip install "nvidia-sdfm[kumorfm]"
+```
+
+Verify:
+
+``` bash
+python -c "from nvidia_sdfm import SDFMClient, kumorfm; print('NVIDIA SDFM SDK installed')"
+```
+
+## Step 3: Configure the NIM Connection
+
+Set the NIM endpoint. Set an API key only when an authenticating gateway protects the deployment:
+
+``` bash
+export KUMORFM_NIM_URL="http://localhost:8000"
+# Optional for an authenticated gateway:
+export NVIDIA_API_KEY="YOUR_GATEWAY_API_KEY"
+```
+
+Pass these values to `SDFMClient`, then run inference through `client.kumorfm(graph).predict(...)`. Do not initialize the underlying KumoRFM engine directly.
+
+## Step 4: Install Kumo Coding Agent
+
+The Kumo Coding Agent has two parts:
+
+  - **Context** (knowledge base): Documentation, PQL rules, workflow guides, and data connector references that teach the agent how to use the Kumo platform. Installed by cloning the repository.
+  - **Skills** (slash commands): Actions like `/kumo-issue` and `/kumo-pr` for reporting bugs and contributing fixes. Installed via `npx skills add`.
+
+**Install the context:**
+
+``` bash
+git clone https://github.com/kumo-ai/kumo-coding-agent.git kumo-coding-agent
+echo 'Also read kumo-coding-agent/CLAUDE.md for Kumo agent capabilities.' >> CLAUDE.md
+```
+
+The second line tells Claude Code to read the agent's knowledge base on startup.
+
+**Install the skills (optional):**
+
+``` bash
+npx skills add kumo-ai/kumo-coding-agent --agent claude-code
+```
+
+## Step 5: Use the Kumo Coding Agent
+
+**Desktop app:**
+
+1.  Open Claude Code
+2.  Select your project folder (if not already open)
+3.  Type a prompt in the chat panel:
+
+``` text
+Load the local AdventureWorks tables, build a relational graph, and predict
+30-day product demand through client.kumorfm(graph).predict().
+```
+
+4.  Claude Code will read the Kumo Coding Agent context, inspect the data, build a graph, write PQL, and run the prediction.
+5.  Review the changes Claude proposes. You can approve, edit, or reject each change before it is applied.
+
+**CLI:**
+
+Start an interactive session:
+
+``` bash
+cd my-kumo-project
+claude
+```
+
+This opens an interactive prompt. Type your request:
+
+``` text
+Load the local AdventureWorks tables, build a relational graph, and predict
+30-day product demand through client.kumorfm(graph).predict().
+```
+
+You can also run a single prompt directly:
+
+``` bash
+claude "Use local AdventureWorks tables to predict 30-day product demand with client.kumorfm(graph).predict()."
+```
+
+## Step 6 (Optional): Upgrade
+
+**Upgrade the SDK:**
+
+``` bash
+pip install --upgrade "nvidia-sdfm[kumorfm]"
+```
+
+**Upgrade the Kumo Coding Agent:**
+
+``` bash
+cd kumo-coding-agent && git pull
+```
+
+To pin to a specific version:
+
+``` bash
+cd kumo-coding-agent && git checkout v1.0.0
+```
+
+## Troubleshooting
+
+### `nvidia_sdfm` cannot be imported
+
+``` bash
+pip install "nvidia-sdfm[kumorfm]"
+```
+
+### The NIM connection fails
+
+``` bash
+export KUMORFM_NIM_URL="https://your-kumorfm-endpoint.example.com"
+export NVIDIA_API_KEY="YOUR_GATEWAY_API_KEY"
+```
+
+### Agent does not respond with Kumo knowledge
+
+  - Verify `kumo-coding-agent/` exists in your project directory
+  - Verify your project's `CLAUDE.md` contains the line referencing `kumo-coding-agent/CLAUDE.md`
+  - Restart Claude Code or start a new session with `claude`
+
+### Claude Code CLI not found
+
+``` bash
+npm install -g @anthropic-ai/claude-code
+```
+
+## Next Steps
+
+  - [Setup](/rfm/sdk-getting-started) for SDK fundamentals
+  - [Make Predictions](/rfm/make-predictions) for PQL query reference
+  - [Kumo Coding Agent](https://github.com/kumo-ai/kumo-coding-agent) for agent source and skills
