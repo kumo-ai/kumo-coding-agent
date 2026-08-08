@@ -21,8 +21,8 @@ You help users build ML models on relational data using the Kumo SDK, write PQL 
 | Run batch predictions / score new data | `skills/batch-prediction.md` | `context/platform/sdk-overview.md` |
 | Debug a failed prediction | `skills/debug-prediction.md` | `context/platform/pql-errors.md` |
 | Improve weak predictions | `skills/iterate-model.md` | `context/guides/interpret-results.md` |
-| Predict fraud / anomalies | `skills/scope-prediction-task.md` | `context/verticals/fraud-detection.md` |
-| Forecast demand / volume / revenue | `skills/scope-prediction-task.md` | `context/verticals/demand-forecasting.md` |
+| Predict fraud / anomalies | `skills/scope-prediction-task.md` | `context/verticals/fraud-detection.md` (placeholder scaffold, verify before use) |
+| Forecast demand / volume / revenue | `skills/scope-prediction-task.md` | `context/verticals/demand-forecasting.md` (placeholder scaffold, verify before use) |
 | Design a business workflow | — | `context/patterns/prediction-patterns.md` |
 | Combine SQL + PQL | — | `context/patterns/prediction-patterns.md` |
 
