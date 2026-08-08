@@ -245,7 +245,7 @@ Training tables are historical snapshots the model learns from.
 ### Planning
 
 ```python
-plan = pq.suggest_training_table_plan(run_mode=kumoai.RunMode.FAST)
+plan = pq.suggest_training_table_plan(run_mode=kumoai.pquery.RunMode.FAST)
 ```
 
 The plan specifies how to sample historical data. You can customize it before generation:
@@ -293,11 +293,12 @@ training_table = pq.generate_training_table(plan, non_blocking=False)
 ### Inspection
 
 ```python
-training_table.head(n=10)
-training_table.count()
-training_table.stats()
-training_table.label_distribution()
-training_table.data_df()  # Load the full table into memory as a pandas DataFrame
+training_df = training_table.data_df()   # Load the full table into memory as a pandas DataFrame
+
+training_df.head(n=10)                    # Preview the first rows
+len(training_df)                          # Row count
+training_df.describe()                    # Summary statistics
+training_df["TARGET"].value_counts()      # Label distribution (the generated target column is named TARGET)
 ```
 
 ### Export and update
@@ -334,7 +335,7 @@ training_table.update(
 The ModelPlan is a composite of 5 sub-plans. Always start from a suggested plan:
 
 ```python
-model_plan = pq.suggest_model_plan(run_mode=kumoai.RunMode.FAST)
+model_plan = pq.suggest_model_plan(run_mode=kumoai.pquery.RunMode.FAST)
 ```
 
 Then customize sub-plans as needed:
@@ -463,9 +464,12 @@ metrics = result.metrics()
 holdout_df = result.holdout_df()          # Load into memory (cols: ENTITY, TARGET, TARGET_PRED)
 holdout_url = result.holdout_url()        # Presigned URL (large datasets)
 
-# Retrieve custom tags set when Trainer.fit() was called
-job  = kumo.TrainingJob(job_id)
+# Retrieve the custom tags set when Trainer.fit() was called
+job  = kumoai.TrainingJob(job_id="JOB_ID")
 tags = job.get_tags()   # e.g. {"model": "gnn", "horizon": "1"}
+
+# Re-create a Trainer directly from those custom tags
+trainer = kumoai.Trainer.load_from_tags({"model": "gnn", "horizon": "1"})
 ```
 
 **Job event log (debug failures):**
@@ -485,7 +489,7 @@ for event in status.event_log:
 Generate a prediction table (analogous to training table, but for inference):
 
 ```python
-pred_plan = pq.suggest_prediction_table_plan(run_mode=kumoai.RunMode.FAST)
+pred_plan = pq.suggest_prediction_table_plan(run_mode=kumoai.pquery.RunMode.FAST)
 
 # Customize anchor time for temporal queries:
 import datetime
@@ -503,13 +507,13 @@ pred_table.anchor_time   # Read back the anchor time used. A property, returns N
 prediction_job = trainer.predict(
     graph=graph,
     prediction_table=pred_table,
-    output_config=kumoai.OutputConfig(
+    output_config=kumoai.artifact_export.OutputConfig(
         output_types={"predictions"},           # or {"predictions", "embeddings"}
         output_connector=connector,
         output_table_name="PREDICTIONS_OUTPUT",
         output_metadata_fields=[
-            kumoai.MetadataField.JOB_TIMESTAMP,
-            kumoai.MetadataField.ANCHOR_TIMESTAMP,
+            kumoai.artifact_export.config.MetadataField.JOB_TIMESTAMP,
+            kumoai.artifact_export.config.MetadataField.ANCHOR_TIMESTAMP,
         ],
     ),
     binary_classification_threshold=0.5,        # Optional: threshold for binary predictions
@@ -572,10 +576,9 @@ pred_result.export(output_config)  # Re-export to different connector
 All long-running operations support `non_blocking=True`. Re-attach from another session:
 
 ```python
-model = kumoai.Model.attach(model_id="MODEL_ID")
-training_table = kumoai.TrainingTable.attach(job_id="JOB_ID")
-model.tag("production-v1")
-model = kumoai.Model.load_by_tag(tag="production-v1")
+# Re-attach to a training job to monitor progress or retrieve metrics
+training_job = kumoai.TrainingJob(job_id="JOB_ID")
+result = training_job.attach()
 
 # Re-create a Trainer from a previous job
 trainer = kumoai.Trainer.load(job_id="JOB_ID")
@@ -630,9 +633,8 @@ endpoint.destroy()                         # Tear down endpoint
 | `kumoai.PredictiveQuery` | PQL query bound to a graph |
 | `kumoai.ModelPlan` | Training configuration |
 | `kumoai.Trainer` | Model training orchestrator |
-| `kumoai.Model` | Trained model |
-| `kumoai.OutputConfig` | Prediction output destination |
-| `kumoai.RunMode` | Enum: `DEBUG`, `FAST`, `NORMAL`, `BEST` |
+| `kumoai.artifact_export.OutputConfig` | Prediction output destination |
+| `kumoai.pquery.RunMode` | Enum: `DEBUG`, `FAST`, `NORMAL`, `BEST` |
 | `kumoai.TrainingTable` | Generated training data |
 
 ### Key methods
@@ -660,6 +662,7 @@ endpoint.destroy()                         # Tear down endpoint
 | `TrainingJobResult` | `.metrics()` | Evaluation results |
 | `TrainingJobResult` | `.model_plan` | Actual ModelPlan after AutoML |
 | `TrainingJobResult` | `.holdout_df()` | Holdout split as DataFrame (ENTITY, TARGET, TARGET_PRED) |
+| `Trainer` | `.load_from_tags(tags)` | Reconstruct a Trainer from custom tags set at training time (classmethod) |
 | `TrainingJob` | `.get_tags()` | Custom tag dict set at training time |
 | `TrainingJob` | `.progress()` | Per-epoch training metrics |
 | `TrainingJob` | `.attach()` | Block with live progress bar |
@@ -695,8 +698,7 @@ endpoint.destroy()                         # Tear down endpoint
 4. **Edge direction reversed.** Edges go FK → PK: `Edge("orders", "USER_ID", "users")`.
 5. **Skipping `validate()`.** Always validate tables, graphs, and queries before training.
 6. **Using `FAST` for production.** Use `NORMAL` or `BEST` for production-quality models.
-7. **Ignoring training table stats.** Check `label_distribution()` and `count()` before training.
+7. **Ignoring training table stats.** Call training_table.data_df().describe() and check the target columns value_counts() before training.
 8. **Using wrong ModelPlan param names.** Use `optimization.base_lr` (not `learning_rate`), `optimization.max_epochs` (not `epochs`), `model_architecture.channels` (not `hidden_channels`). After training, inspect `result.model_plan` to see what AutoML actually chose.
 9. **Training on too-recent data.** Customize `plan.start_time`/`end_time` for sufficient history.
-10. **Forgetting to tag production models.** Use `result.tag()` for retrieval.
-
+10. **Forgetting to tag production models.** Pass custom_tags to trainer.fit(...) at training time, then retrieve later via Trainer.load_from_tags(tags).
