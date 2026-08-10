@@ -1,6 +1,6 @@
 # PQL Syntax Reference (RFM_SDK_V2)
 
-> Source: kumo-pql (PQL_SYNTAX_REFERENCE) | Last synced: 2026-03-31
+> Source: kumo-pql (kumopql/grammar/PQLGrammar.g4) | Last synced: 2026-03-31
 >
 > **Authoritative source for PQL syntax:** the `kumo-pql` parser grammar
 > (`kumopql/grammar/PQLGrammar.g4`) and the `kumo-api` type definitions

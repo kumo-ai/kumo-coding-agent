@@ -61,7 +61,6 @@ platform/pql-syntax.md:
   version: "6caec97"
   source_files:
     - kumopql/grammar/PQLGrammar.g4
-    - docs/PQL_SYNTAX_REFERENCE.md
   last_sync: "2026-03-31"
 
 platform/pql-errors.md:
@@ -69,8 +68,6 @@ platform/pql-errors.md:
   version: "6caec97"
   source_files:
     - kumopql/validator/time_range_validator.py
-    - docs/PQL_FAILURE_CATEGORIES.md
-    - docs/PQL_SYNTAX_ERRORS.md
   last_sync: "2026-03-31"
 
 # ─── kumo-ml (tracked, no sourced docs yet) ──────────────────────────

@@ -1,6 +1,6 @@
 # PQL Errors and Failure Categories
 
-> Source: kumo-pql (PQL_FAILURE_CATEGORIES, PQL_SYNTAX_ERRORS) | Last synced: 2026-03-31
+> Source: kumo-pql (kumopql/validator/time_range_validator.py, kumopql/validator/*.py) | Last synced: 2026-03-31
 
 ## Overview
 
