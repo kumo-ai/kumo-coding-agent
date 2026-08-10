@@ -17,7 +17,7 @@ End-to-end workflow:
 4. Write a PQL query defining the prediction task.
 5. Generate training tables from historical data.
 6. Train a model.
-7. Run batch predictions or launch an online serving endpoint.
+7. Run batch predictions (or, experimentally, deploy to a real-time online serving endpoint).
 
 ---
 
@@ -584,34 +584,41 @@ trainer = kumoai.Trainer.load_from_tags(tags={"env": "production"})
 
 ---
 
-## Online Serving
+## Online Serving (Experimental)
 
-Deploy a trained model as a real-time prediction endpoint.
+Trained models can be deployed as real-time inference endpoints. This is an
+**experimental**, gated capability: the control plane is provisioned by the
+Kumo team (Alpha / early access), and the `kumoai.online` client emits an
+`ExperimentalWarning` and may change without notice. It is a separate system
+from the batch-prediction SDK above - use batch prediction unless real-time
+serving has been explicitly provisioned for the tenant.
 
-### Launch
+The current flow is: train a model, prepare it for serving with the
+distillation / export utilities, then register and serve it through
+`kumoai.online`:
 
 ```python
-endpoint_future = result.launch_online_serving_endpoint()
-endpoint = endpoint_future.attach()  # Block until ready
-```
+# 1. Prepare the trained model for serving (distillation + export)
+from kumoai.trainer import DistillationTrainer
+from kumoai.artifact_export import export_model
 
-### Predict
+# 2. Deploy via the online serving control plane (experimental)
+import kumoai.online as kumo_online
 
-```python
-result = endpoint.predict(
-    fkey={"user_id": "42"},
-    time=None,                       # Optional anchor timestamp
-    realtime_features=None,          # Optional feature overrides
+client = kumo_online.init(
+    url="https://control.example.com",
+    client_id="CLIENT_ID",
+    client_secret="CLIENT_SECRET",
+    token_url="https://.../oauth2/token",
 )
+client.register_model("v1", "s3://bucket/models/my_model/")
+svc = client.create_inference_service("svc-1", "v1")
+result = svc.infer(inputs=[...])
 ```
 
-### Update / Destroy / Ping
-
-```python
-endpoint.update(refresh_graph_data=True)  # Refresh data + optionally update model
-endpoint.ping()                            # Check endpoint liveness
-endpoint.destroy()                         # Tear down endpoint
-```
+> The legacy `TrainingJobResult.launch_online_serving_endpoint()` path still
+> exists but its future blocks with `.result()` (not `.attach()`); prefer the
+> `kumoai.online` client above.
 
 ---
 

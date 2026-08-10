@@ -37,14 +37,14 @@ Is the user exploring or prototyping?
 | Dimension | RFM Zero-Shot | fine-tuned SDK Training |
 |-----------|---------------|------------------------|
 | **Setup time** | Minutes | Hours (first run), faster with templates |
-| **Prediction latency** | Seconds to minutes | Minutes (batch), ms (online endpoint) |
+| **Prediction latency** | Seconds to minutes | Minutes (batch); low-latency via experimental online serving |
 | **Accuracy** | Good baseline (~0.6–0.75 AUC typical) | Higher ceiling (~0.75–0.95 AUC with good data) |
 | **Data requirement** | Works with small datasets | Needs sufficient history (>10K entity rows, >100K events) |
 | **Iteration speed** | Instant — change query, re-predict | Slow — retrain per change (hours) |
 | **Cost** | Low (API call) | Higher (compute for training + prediction) |
 | **Customization** | Limited to PQL query + graph structure | Full control: hyperparameters, encoders, sampling |
 | **Explainability** | Feature importance via `ExplainConfig` | Holdout analysis, training curves, embeddings |
-| **Online serving** | Not available | Deploy as real-time endpoint |
+| **Online serving** | Not available | Experimental (provisioned real-time endpoint) |
 | **Python package** | `kumoai.rfm` | `kumoai` (full SDK) |
 
 ---
@@ -61,7 +61,7 @@ Is the user exploring or prototyping?
 **RFM is NOT enough when:**
 - Zero-shot AUC is < 0.6 and the task should be predictable
 - The user needs > 0.85 AUC for production deployment
-- Online serving (real-time endpoint) is required
+- Real-time online serving is required (experimental, provisioned by the Kumo team)
 - Custom feature engineering or text encoding is needed
 
 ## When to Use fine-tuned SDK Training
@@ -69,7 +69,7 @@ Is the user exploring or prototyping?
 - **Production models**: Accuracy matters and you have compute budget
 - **Sufficient data**: > 10K entities, > 100K events, > 6 months of history
 - **Custom requirements**: Specific encoders, sampling strategies, or architectures
-- **Online serving**: Need real-time predictions via API endpoint
+- **Online serving**: Need real-time predictions via API endpoint (experimental; requires Kumo-provisioned early access)
 - **Embeddings**: Need learned entity embeddings for downstream tasks
 
 **Training is NOT worth it when:**
@@ -123,7 +123,7 @@ poorly-defined task.
 | "I have 500 rows of data" | RFM | Too small for training |
 | "Our current model gets 0.7 AUC, can we do better?" | fine-tuned SDK | Incremental improvement needs custom training |
 | "Run predictions for all 1M customers" | Either | RFM for speed, training for accuracy |
-| "I need real-time predictions" | fine-tuned SDK | Online serving requires trained model |
+| "I need real-time predictions" | fine-tuned SDK | Online serving (experimental) requires a trained model |
 | "Which of these 5 tasks is most promising?" | RFM for all 5 | Screen tasks quickly before committing |
 
 ---
