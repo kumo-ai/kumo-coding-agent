@@ -43,7 +43,7 @@ Determine the type based on the description:
 
 | Type | Signal | Label |
 |------|--------|-------|
-| **gap** | "agent didn't know", "missing info", "couldn't answer" | `gap` |
+| **gap** | "agent didn't know", "missing info", "couldn't answer" | `enhancement` |
 | **bug** | "wrong info", "incorrect", "outdated", "says X but should be Y" | `bug` |
 | **feature** | "add support for", "new skill", "new vertical", "would be nice" | `enhancement` |
 
