@@ -117,7 +117,8 @@ documentation_gaps:
       - skills/train-model.md
     priority: high
     added: "2026-03-30"
-    status: open
+    status: resolved
+    resolved: "2026-07-01"
 
   - id: doc-007
     feature: "batch_prediction_job.progress()"
@@ -131,7 +132,8 @@ documentation_gaps:
       - skills/train-model.md
     priority: high
     added: "2026-03-30"
-    status: open
+    status: resolved
+    resolved: "2026-07-01"
 
   - id: doc-008
     feature: "training_job.cancel() / batch_prediction_job.cancel()"
@@ -144,7 +146,8 @@ documentation_gaps:
       - skills/train-model.md
     priority: medium
     added: "2026-03-30"
-    status: open
+    status: resolved
+    resolved: "2026-07-01"
 
   - id: doc-009
     feature: "JobStatusReport.event_log"
@@ -159,7 +162,8 @@ documentation_gaps:
       - skills/debug-prediction.md
     priority: medium
     added: "2026-03-30"
-    status: open
+    status: resolved
+    resolved: "2026-07-01"
 
   - id: doc-010
     feature: "endpoint.ping() and detailed update() params"
