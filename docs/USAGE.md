@@ -120,9 +120,12 @@ Fixes a skill or context doc and opens a pull request.
 | I want to... | Start here |
 |--------------|------------|
 | Build a prediction model end-to-end | `skills/scope-prediction-task.md` |
+| Connect to data / explore schema | `skills/explore-data.md` |
+| Build a graph from data | `skills/build-graph.md` |
 | Get instant predictions (no training) | `skills/rfm-predict.md` |
 | Write or fix a PQL query | `skills/write-pql.md` |
 | Train a high-accuracy model | `skills/train-model.md` |
+| Run batch predictions / score new data | `skills/batch-prediction.md` |
 | Debug a failed prediction | `skills/debug-prediction.md` |
 | Improve weak model performance | `skills/iterate-model.md` |
 | Decide between RFM and training | `context/guides/rfm-vs-training.md` |

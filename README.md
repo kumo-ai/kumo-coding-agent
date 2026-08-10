@@ -135,9 +135,12 @@ cd kumo-coding-agent && git fetch --tags && git checkout v1.0.0
 | Task | Start Here |
 |------|------------|
 | Build a prediction model end-to-end | `skills/scope-prediction-task.md` |
+| Connect to data / explore schema | `skills/explore-data.md` |
+| Build a graph from data | `skills/build-graph.md` |
 | Get instant predictions (no training) | `skills/rfm-predict.md` |
 | Write or fix a PQL query | `skills/write-pql.md` |
 | Train a high-accuracy model | `skills/train-model.md` |
+| Run batch predictions / score new data | `skills/batch-prediction.md` |
 | Debug a failed prediction | `skills/debug-prediction.md` |
 | Improve weak model performance | `skills/iterate-model.md` |
 | Design a SQL+PQL business workflow | `context/patterns/prediction-patterns.md` |
