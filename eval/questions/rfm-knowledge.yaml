@@ -77,7 +77,7 @@ questions:
     question: "How do you get feature importance explanations from KumoRFM?"
     expected_answer: |
       result = model.predict(query, explain=rfm.ExplainConfig(), run_mode="fast")
-      Explainability works best as a single-entity FAST-mode feature.
+      Explainability only works for single-entity predictions in run_mode="fast": passing multiple entities raises ValueError, and NORMAL/BEST modes auto-downgrade to FAST with a warning.
     grading: exact_structure
 
   # --- Semantic Views ---
