@@ -152,7 +152,7 @@ Primary doc to update: `platform/sdk-overview.md`
 
 Also update if enum values changed:
 - `platform/pql-syntax.md` (TimeUnit, AggregationType)
-- `platform/rfm-overview.md` (RunMode, run_mode values)
+- `platform/rfm-overview.md` (only if RFM run_mode str values fast/normal/best change; RFM run_mode is a different parameter from the fine-tuned SDK RunMode enum and has no DEBUG value, so a fine-tuned-only RunMode addition must not be propagated here)
 - `platform/graph-construction.md` (Dtype, Stype)
 
 Update Source headers with version and date.
@@ -215,7 +215,8 @@ Changes: <summary — e.g., 'new QuantileLossConfig, RunMode.TURBO added'>"
 
 | If This Changes | These Docs Need Updating |
 |-----------------|------------------------|
-| RunMode enum | sdk-overview.md, rfm-overview.md, skills/train-model.md, skills/rfm-predict.md |
+| RunMode enum (fine-tuned SDK kumoapi.model_plan.RunMode) | sdk-overview.md, skills/train-model.md |
+| RFM run_mode (separate str param, no DEBUG; only affected if the fast/normal/best set itself changes) | rfm-overview.md, skills/rfm-predict.md |
 | TimeUnit enum | pql-syntax.md, rfm-overview.md, skills/write-pql.md |
 | AggregationType enum | pql-syntax.md, rfm-overview.md |
 | Dtype / Stype enums | sdk-overview.md, graph-construction.md |

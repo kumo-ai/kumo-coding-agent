@@ -144,8 +144,11 @@ source code — do not trust this table if it may be stale.
 **PQL Comparison Operators** (from `PQLGrammar.g4`):
 `=`, `!=`, `<`, `>`, `<=`, `>=`, `IS`, `IS NOT`, `IN`, `IS IN`, `LIKE`, `NOT LIKE`, `CONTAINS`, `NOT CONTAINS`, `STARTS WITH`, `ENDS WITH`
 
-**RunMode** (from `kumoapi/model_plan.py`):
+**RunMode** (from `kumoapi/model_plan.py`, fine-tuned SDK ModelPlan only):
 `DEBUG`, `FAST`, `NORMAL`, `BEST`
+
+**RFM `run_mode`** (separate str parameter on `model.predict()`/`model.evaluate()` — not the kumoapi RunMode enum above, no DEBUG value; see `context/platform/rfm-overview.md`):
+`fast`, `normal`, `best`
 
 **Stype** (from `kumoapi/typing.py`):
 `numerical`, `categorical`, `multicategorical`, `ID`, `text`, `timestamp`, `sequence`, `image`, `unsupported`

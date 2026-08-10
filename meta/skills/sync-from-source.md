@@ -81,7 +81,8 @@ kumo-sdk should always be last.
 
 | If this changes in kumo-api | These docs need updating |
 |----------------------------|------------------------|
-| RunMode enum | sdk-overview.md, rfm-overview.md, train-model.md, rfm-predict.md |
+| RunMode enum (fine-tuned SDK kumoapi.model_plan.RunMode) | sdk-overview.md, train-model.md |
+| RFM run_mode (separate str param, no DEBUG; only affected if the fast/normal/best set itself changes) | rfm-overview.md, rfm-predict.md |
 | TimeUnit enum | pql-syntax.md, rfm-overview.md, write-pql.md |
 | AggregationType enum | pql-syntax.md, rfm-overview.md |
 | Dtype / Stype enums | sdk-overview.md, graph-construction.md |
